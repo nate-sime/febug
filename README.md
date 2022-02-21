@@ -76,8 +76,9 @@ u at DoFs [ 0  1  4  8 13 15 19 22 24]
 
 ## Plotting
 
-A number of utility methods are provided for plotting using pyvista. 
-These are intended for debugging finite element problems. It is emphasised 
-here that these plotting methods are not intended for rapidly debugging 
-small finite element problems. For visualisation of finite element models 
-external packages such as [paraview](https://www.paraview.org/) are recommended.
+A number of utility methods are provided for plotting using pyvista.
+These are intended for rapidly debugging **small** finite element problems.
+It is emphasised here that these plotting methods are not intended for
+visualising large or intricate finite element models. For visualisation of
+finite element models external packages such as
+[paraview](https://www.paraview.org/) are recommended.
