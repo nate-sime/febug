@@ -43,10 +43,17 @@ def _(meshtags: typing.Union[dolfinx.cpp.mesh.MeshTags_int32,
         plotter = pyvista.Plotter()
     mesh = meshtags.mesh
 
-    edges = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
-    edges.cell_arrays["Marker"] = meshtags.values
-    edges.set_active_scalars("Marker")
-    plotter.add_mesh(edges, show_scalar_bar=True)
+    if meshtags.dim > 0:
+        edges = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
+        edges.cell_data[meshtags.name] = meshtags.values
+        edges.set_active_scalars(meshtags.name)
+        plotter.add_mesh(edges, show_scalar_bar=True)
+    else:
+        x = mesh.geometry.x[meshtags.indices]
+        point_cloud = pyvista.PolyData(x)
+        point_cloud[meshtags.name] = meshtags.values
+
+        plotter.add_mesh(point_cloud)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -81,34 +88,26 @@ def _(u: dolfinx.fem.function.Function, plotter: pyvista.Plotter=None):
 
 def plot_warp(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
               factor: float=1.0):
-    assert len(u.ufl_shape) <= 1
+    assert len(u.ufl_shape) == 1
+    assert u.ufl_shape[0] in (2, 3)
 
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = u.function_space.mesh
 
-    grid = _to_pyvista_grid(mesh, mesh.topology.dim)
+    grid = _to_pyvista_grid(u.function_space)
 
-    dof_values = u.x.array
-    if np.iscomplexobj(dof_values):
-        dof_values = dof_values.real
+    bs = u.function_space.dofmap.index_map_bs
+    plot_values = u.x.array.reshape(
+        u.function_space.tabulate_dof_coordinates().shape[0],
+        u.function_space.dofmap.index_map_bs)
+    if bs < 3:
+        plot_values = np.hstack(
+            (plot_values, np.zeros((plot_values.shape[0], 3-bs))))
+    grid.point_data[u.name] = plot_values
 
-    print(dof_values.shape)
-    quit()
-    # if dof_values.shape
-    # vertex_magnitudes = np.linalg.norm(dof_values, axis=dof_values.shape)
-
-    # Add 3rd dimension padding for 2d plots
-    if dof_values.shape[1] == 2:
-        dof_values = np.hstack(
-            (dof_values, np.zeros((dof_values.shape[0], 1))))
-
-    grid.point_data[u.name] = vertex_magnitudes
-    grid["vectors"] = dof_values
-    grid.set_active_scalars(u.name)
-
-    warped = grid.warp_by_vector("vectors", factor=factor)
-    plotter.add_mesh(warped, scalars=u.name, show_scalar_bar=True)
+    warped = grid.warp_by_vector(vectors=u.name)
+    plotter.add_mesh(warped)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -120,31 +119,25 @@ def plot_warp(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
 def plot_quiver(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
                 factor: float=1.0):
     assert len(u.ufl_shape) == 1
-    assert u.ufl_shape[0] in (1, 2)
+    assert u.ufl_shape[0] in (1, 2, 3)
 
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = u.function_space.mesh
 
-    grid = _to_pyvista_grid(mesh, mesh.topology.dim)
+    grid = _to_pyvista_grid(u.function_space)
 
-    vertex_values = u.compute_point_values()
-    if np.iscomplexobj(vertex_values):
-        vertex_values = vertex_values.real
-
-    vertex_magnitudes = np.linalg.norm(vertex_values, axis=1)
-
-    # Add 3rd dimension padding for 2d plots
-    if vertex_values.shape[1] == 2:
-        vertex_values = np.hstack(
-            (vertex_values, np.zeros((vertex_values.shape[0], 1))))
-
-    grid.point_arrays[u.name] = vertex_magnitudes
-    grid["vectors"] = vertex_values
-    grid.set_active_scalars(u.name)
+    bs = u.function_space.dofmap.index_map_bs
+    plot_values = u.x.array.reshape(
+        u.function_space.tabulate_dof_coordinates().shape[0],
+        u.function_space.dofmap.index_map_bs)
+    if bs < 3:
+        plot_values = np.hstack(
+            (plot_values, np.zeros((plot_values.shape[0], 3-bs))))
+    grid.point_data[u.name] = plot_values
 
     geom = pyvista.Arrow()
-    glyphs = grid.glyph(orient="vectors", scale=u.name, factor=factor,
+    glyphs = grid.glyph(orient=u.name, scale=u.name, factor=factor,
                         geom=geom)
     plotter.add_mesh(glyphs)
 
@@ -160,7 +153,6 @@ def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
         plotter = pyvista.Plotter()
     mesh = V.mesh
     mesh_grid = _to_pyvista_grid(mesh, mesh.topology.dim)
-    dof_grid = _to_pyvista_grid(V)
 
     x = V.tabulate_dof_coordinates()
     x_polydata = pyvista.PolyData(x)

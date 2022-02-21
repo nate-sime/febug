@@ -19,6 +19,28 @@ def test_plot_function(p, mesh):
     febug.plot(u)
 
 
+@pytest.mark.parametrize(
+    "mesh",
+    [pytest.param(msh, marks=pytest.mark.xfail(
+        msh.topology.dim == 1, reason="No warping 1D meshes"))
+     for msh in meshes1D + meshes2D + meshes3D])
+@pytest.mark.parametrize("p", [1, 2])
+def test_plot_warp(p, mesh):
+    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    febug.plot_warp(u)
+
+
+@pytest.mark.parametrize(
+    "mesh",
+    [pytest.param(msh, marks=pytest.mark.xfail(
+        msh.topology.dim == 1, reason="No warping 1D meshes"))
+     for msh in meshes1D + meshes2D + meshes3D])
+@pytest.mark.parametrize("p", [1, 2])
+def test_plot_quiver(p, mesh):
+    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    febug.plot_quiver(u)
+
+
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 def test_plot_mesh(mesh):
     febug.plot(mesh)
@@ -31,9 +53,9 @@ def test_plot_dofmap(p, mesh):
     febug.plot_dofmap(V)
 
 
-@pytest.mark.parametrize("mesh", meshes2D)
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 def test_plot_meshtags(mesh):
-    for t in range(1, mesh.topology.dim):
+    for t in range(0, mesh.topology.dim):
         mesh.topology.create_entities(t)
         indices = np.arange(mesh.topology.index_map(t).size_local)
         values = np.ones_like(indices, dtype=np.int32)

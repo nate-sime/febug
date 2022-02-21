@@ -1,6 +1,6 @@
 import febug
 febug.overload_dolfinx()
-febug.error_on_issue = True
+febug.error_on_issue = False
 
 from petsc4py import PETSc
 from mpi4py import MPI
