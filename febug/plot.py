@@ -11,18 +11,13 @@ import dolfinx.plot
 @functools.singledispatch
 def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
                      entities=None):
-    num_cells = mesh.topology.index_map(tdim).size_local
-    if entities is None:
-        entities = np.arange(num_cells, dtype=np.int32)
-    pyvista_cells, cell_types, x = dolfinx.plot.create_vtk_mesh(
-        mesh, tdim, entities)
-    return pyvista.UnstructuredGrid(pyvista_cells, cell_types, x)
+    return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(
+        mesh, tdim, entities))
 
 
 @_to_pyvista_grid.register
 def _(V: dolfinx.fem.FunctionSpace):
-    pyvista_cells, cell_types, x = dolfinx.plot.create_vtk_mesh(V)
-    return pyvista.UnstructuredGrid(pyvista_cells, cell_types, x)
+    return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(V))
 
 
 @functools.singledispatch

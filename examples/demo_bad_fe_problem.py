@@ -17,11 +17,13 @@ u = dolfinx.fem.Function(V)
 u.name = "u"
 u.interpolate(lambda x: x[0]*x[1])
 
-F = ufl.inner(ufl.grad(u), ufl.grad(v)) * ufl.dx
+# -- Form contains singularities
+F = ufl.inner((1 / u) * ufl.grad(u), ufl.grad(v)) * ufl.dx
 
-# indices = np.array([1, 2, 3, 4, 2], dtype=np.int32)
-# values = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.double)
-# mt = dolfinx.mesh.MeshTags(mesh, mesh.topology.dim, indices, values)
+# -- Mesh tag data is invalid!
+indices = np.array([1, 2, 3, 4, 2], dtype=np.int32)
+values = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.double)
+mt = dolfinx.mesh.MeshTags(mesh, mesh.topology.dim, indices, values)
 
 facets = dolfinx.mesh.locate_entities_boundary(
     mesh, dim=1, marker=lambda x: np.isclose(x[0], 0.0) | np.isclose(x[0], 2.0))
