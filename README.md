@@ -21,6 +21,12 @@ febug.error_on_issue = False
 Selecting `febug.error_on_issue = True` will raise an `FebugException` each 
 time `febug` detects a potential issue.
 
+### Performance
+
+Debugging is expensive. `febug` is **not** intended to be used with large scale 
+production code. Use `febug` with small problems to ensure the sane and safe 
+solution of your finite element problem in an abstract setting.
+
 ### Nonlinear problem example
 
 A typical 'gotcha' arising in nonlinear finite element problems is 
