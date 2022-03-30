@@ -65,7 +65,7 @@ def create_meshtags(tdim):
     mesh.topology.create_entities(tdim)
     indices = np.arange(mesh.topology.index_map(tdim).size_local)
     values = indices
-    return dolfinx.mesh.MeshTags(mesh, tdim, indices, values)
+    return dolfinx.mesh.meshtags(mesh, tdim, indices, values)
 
 # -- vertices
 subplotter.subplot(2, 0)

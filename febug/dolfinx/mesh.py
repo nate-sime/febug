@@ -6,9 +6,9 @@ import febug
 from dolfinx.mesh import *
 
 
-def MeshTags(mesh: dolfinx.mesh.Mesh, dim: int, indices: np.ndarray,
+def meshtags(mesh: dolfinx.mesh.Mesh, dim: int, indices: np.ndarray,
              values: np.ndarray):
-    mts = dolfinx.mesh.MeshTags(mesh, dim, indices, values)
+    mts = dolfinx.mesh.meshtags(mesh, dim, indices, values)
     check_mesh_tags(mts)
     return mts
 

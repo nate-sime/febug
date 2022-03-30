@@ -24,7 +24,6 @@ def test_singularity_finder_residual(u_lmbda_has_zero):
     def do_test(form):
         issues = febug.dolfinx.nls.search_for_potential_singularity(form)
         assert issues[0][0].name == u.name
-        assert issues[0][0].id == u.id
         assert len(issues[0][1]) > 0 if has_zero else len(issues[0][1]) == 0
 
     do_test(F)

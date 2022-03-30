@@ -59,5 +59,5 @@ def test_plot_meshtags(mesh):
         mesh.topology.create_entities(t)
         indices = np.arange(mesh.topology.index_map(t).size_local)
         values = np.ones_like(indices, dtype=np.int32)
-        mt = dolfinx.mesh.MeshTags(mesh, t, indices, values)
+        mt = dolfinx.mesh.meshtags(mesh, t, indices, values)
         febug.plot(mt)
