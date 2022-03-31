@@ -42,21 +42,26 @@ def monitor_mpl(comm=MPI.COMM_WORLD):
 def monitor_unicode(comm=MPI.COMM_WORLD):
     import shutil
     term_sz = shutil.get_terminal_size()
-    start_idx = 4
+    start_idx = 4  # Buffer carriage idx from y axis labels
 
-    def y_axis_exp_str(ival):
-        exponent = str(ival).translate(num2ss)
-        return f"10{exponent}" + " " * (start_idx - len(exponent))
+    # Given an exponent value, format the yaxis label
+    def y_axis_exp_str(exp_val):
+        exp_str = str(exp_val).translate(num2ss)
+        return f"10{exp_str}" + " " * (start_idx - len(exp_str))
 
+    # Characters used to draw lines and superscript exponents
+    diverged_char = "D"
     chars = "_,⎵.-'¯`⎴"
     num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁴⁵⁶⁷⁹")
-    rnorms = []
-    intervals = []
-    carriage_idx = [0]
+
+    rnorms = []         # Store residuals
+    intervals = [0]     # Store exponents
+    carriage_idx = [0]  # Store cursor position
     def monitor(ctx, it, rnorm):
         if comm.rank != 0:
             return
 
+        # Cannot take log10(0.0)
         if rnorm == 0.0:
             print("\nrnorm = 0.0")
             return
@@ -65,23 +70,35 @@ def monitor_unicode(comm=MPI.COMM_WORLD):
         carriage_idx[0] += 1
 
         exp = math.log10(rnorm)
-        c_exp = math.ceil(exp)
+        i_exp = math.floor(exp)
+
+        # On the first iteration set up a y axis label at the exponent
         if it == 0:
-            intervals.append(c_exp)
+            intervals[0] = i_exp
             print(f"\nStarting iteration {it}", flush=True)
-            print(y_axis_exp_str(c_exp), end="", flush=True)
+            print(y_axis_exp_str(i_exp), end="", flush=True)
 
-        if c_exp < intervals[-1]:
-            intervals.append(c_exp)
-            print("\n", end="")
-            print(y_axis_exp_str(c_exp) + " "*(carriage_idx[0]-1), end="", flush=True)
+        # The y axis label needs to be redrawn on the new line if we're in a
+        # new range
+        if i_exp < intervals[0]:
+            # Fill any missing yaxis labels
+            for j in range(i_exp, intervals[0])[::-1]:
+                print("\n" + y_axis_exp_str(j), end="", flush=True)
+            print(" "*(carriage_idx[0]-1), end="", flush=True)
+            intervals[0] = i_exp
 
-        char = chars[math.floor((exp - math.floor(exp)) * len(chars))]
-        print(char, end="", flush=True)
+        if i_exp > intervals[0]:
+            print(diverged_char, end="", flush=True)
+        else:
+            # Compute the character within the exponent interval to be used
+            char = chars[math.floor((exp - math.floor(exp)) * len(chars))]
+            print(char, end="", flush=True)
 
+        # If we've exceeded the terminal column limit, generate a new frame
+        # below
         if carriage_idx[0] + start_idx >= term_sz.columns:
             print(f"\nStarting iteration {it}", flush=True)
-            print(y_axis_exp_str(c_exp), end="", flush=True)
+            print(y_axis_exp_str(i_exp), end="", flush=True)
             carriage_idx[0] = 0
 
     return monitor
