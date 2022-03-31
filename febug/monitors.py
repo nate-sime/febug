@@ -1,4 +1,5 @@
 from mpi4py import MPI
+import math
 
 
 class MonitorMPL:
@@ -36,3 +37,42 @@ class MonitorMPL:
 
 def monitor_mpl(comm=MPI.COMM_WORLD):
     return MonitorMPL(comm).monitor
+
+
+def monitor_unicode(comm=MPI.COMM_WORLD):
+    import shutil
+    term_sz = shutil.get_terminal_size((80, 20))
+    start_idx = 3
+
+    def interval_str(ival):
+        exponent = str(ival).translate(num2ss)
+        return f"10{exponent}" + " " * (start_idx - len(exponent))
+
+    rnorms = []
+    max_inteval = 0
+    chars = [".", "⋅", "˙"]
+    num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁴⁵⁶⁷⁹")
+    intervals = []
+    its = []
+    def monitor(ctx, it, rnorm):
+        if comm.rank != 0:
+            return
+        rnorms.append(rnorm)
+        its.append(its)
+
+        exp = math.log10(rnorm)
+        interval = math.floor(exp), math.ceil(exp)
+        if it == 0:
+            max_interval = interval[1]
+            intervals.append(interval[1])
+            print(interval_str(max_interval), end="", flush=True)
+
+        if interval[1] < intervals[-1]:
+            print("\n", end="")
+            print(interval_str(interval[1]) + " "*(len(its)-1), end="", flush=True)
+            intervals.append(interval[1])
+
+        char = chars[math.floor((exp - interval[0]) * len(chars))]
+        print(char, end="", flush=True)
+
+    return monitor
