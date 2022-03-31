@@ -1,5 +1,5 @@
 import sys
-from .plot import (plot, plot_dofmap, plot_warp, plot_quiver,
+from .plot import (plot, plot_meshtags, plot_dofmap, plot_warp, plot_quiver,
                    plot_entity_indices)
 
 

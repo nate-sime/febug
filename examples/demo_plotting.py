@@ -70,17 +70,17 @@ def create_meshtags(tdim):
 # -- vertices
 subplotter.subplot(2, 0)
 subplotter.add_title("vertex tags")
-febug.plot(create_meshtags(mesh.topology.dim - 2), plotter=subplotter)
+febug.plot_meshtags(create_meshtags(mesh.topology.dim - 2), plotter=subplotter)
 
 # -- facets
 subplotter.subplot(2, 1)
 subplotter.add_title("facet tags")
-febug.plot(create_meshtags(mesh.topology.dim - 1), plotter=subplotter)
+febug.plot_meshtags(create_meshtags(mesh.topology.dim - 1), plotter=subplotter)
 
 # -- cells
 subplotter.subplot(2, 2)
 subplotter.add_title("cell tags")
-febug.plot(create_meshtags(mesh.topology.dim), plotter=subplotter)
+febug.plot_meshtags(create_meshtags(mesh.topology.dim), plotter=subplotter)
 
 # -- show
 subplotter.show()

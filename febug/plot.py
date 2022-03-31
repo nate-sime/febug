@@ -34,34 +34,6 @@ def plot(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
     return plotter
 
 
-@plot.register(dolfinx.cpp.mesh.MeshTags_int32)
-@plot.register(dolfinx.cpp.mesh.MeshTags_int64)
-def _(meshtags: typing.Union[dolfinx.cpp.mesh.MeshTags_int32,
-                             dolfinx.cpp.mesh.MeshTags_int64],
-      plotter: pyvista.Plotter=None):
-    if plotter is None:
-        plotter = pyvista.Plotter()
-    mesh = meshtags.mesh
-
-    if meshtags.dim > 0:
-        edges = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
-        edges.cell_data[meshtags.name] = meshtags.values
-        edges.set_active_scalars(meshtags.name)
-        plotter.add_mesh(edges, show_scalar_bar=True)
-    else:
-        x = mesh.geometry.x[meshtags.indices]
-        point_cloud = pyvista.PolyData(x)
-        point_cloud[meshtags.name] = meshtags.values
-
-        plotter.add_mesh(point_cloud)
-
-    if mesh.geometry.dim == 2:
-        plotter.enable_parallel_projection()
-        plotter.view_xy()
-
-    return plotter
-
-
 @plot.register
 def _(u: dolfinx.fem.function.Function, plotter: pyvista.Plotter=None):
     if plotter is None:
@@ -78,6 +50,33 @@ def _(u: dolfinx.fem.function.Function, plotter: pyvista.Plotter=None):
     grid.set_active_scalars(u.name)
 
     plotter.add_mesh(grid, scalars=u.name, show_scalar_bar=True)
+
+    if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
+def plot_meshtags(meshtags: typing.Union[
+    dolfinx.cpp.mesh.MeshTags_int8, dolfinx.cpp.mesh.MeshTags_int32,
+    dolfinx.cpp.mesh.MeshTags_int64, dolfinx.mesh.MeshTagsMetaClass],
+                  plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+    mesh = meshtags.mesh
+
+    if meshtags.dim > 0:
+        edges = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
+        edges.cell_data[meshtags.name] = meshtags.values
+        edges.set_active_scalars(meshtags.name)
+        plotter.add_mesh(edges, show_scalar_bar=True)
+    else:
+        x = mesh.geometry.x[meshtags.indices]
+        point_cloud = pyvista.PolyData(x)
+        point_cloud[meshtags.name] = meshtags.values
+
+        plotter.add_mesh(point_cloud)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
