@@ -41,38 +41,47 @@ def monitor_mpl(comm=MPI.COMM_WORLD):
 
 def monitor_unicode(comm=MPI.COMM_WORLD):
     import shutil
-    term_sz = shutil.get_terminal_size((80, 20))
-    start_idx = 3
+    term_sz = shutil.get_terminal_size()
+    start_idx = 4
 
-    def interval_str(ival):
+    def y_axis_exp_str(ival):
         exponent = str(ival).translate(num2ss)
         return f"10{exponent}" + " " * (start_idx - len(exponent))
 
-    rnorms = []
-    max_inteval = 0
-    chars = [".", "⋅", "˙"]
+    chars = "_,⎵.-'¯`⎴"
     num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁴⁵⁶⁷⁹")
+    rnorms = []
     intervals = []
-    its = []
+    carriage_idx = [0]
     def monitor(ctx, it, rnorm):
         if comm.rank != 0:
             return
+
+        if rnorm == 0.0:
+            print("\nrnorm = 0.0")
+            return
+
         rnorms.append(rnorm)
-        its.append(its)
+        carriage_idx[0] += 1
 
         exp = math.log10(rnorm)
-        interval = math.floor(exp), math.ceil(exp)
+        c_exp = math.ceil(exp)
         if it == 0:
-            max_interval = interval[1]
-            intervals.append(interval[1])
-            print(interval_str(max_interval), end="", flush=True)
+            intervals.append(c_exp)
+            print(f"\nStarting iteration {it}", flush=True)
+            print(y_axis_exp_str(c_exp), end="", flush=True)
 
-        if interval[1] < intervals[-1]:
+        if c_exp < intervals[-1]:
+            intervals.append(c_exp)
             print("\n", end="")
-            print(interval_str(interval[1]) + " "*(len(its)-1), end="", flush=True)
-            intervals.append(interval[1])
+            print(y_axis_exp_str(c_exp) + " "*(carriage_idx[0]-1), end="", flush=True)
 
-        char = chars[math.floor((exp - interval[0]) * len(chars))]
+        char = chars[math.floor((exp - math.floor(exp)) * len(chars))]
         print(char, end="", flush=True)
+
+        if carriage_idx[0] + start_idx >= term_sz.columns:
+            print(f"\nStarting iteration {it}", flush=True)
+            print(y_axis_exp_str(c_exp), end="", flush=True)
+            carriage_idx[0] = 0
 
     return monitor
