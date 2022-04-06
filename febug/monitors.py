@@ -1,5 +1,19 @@
 from mpi4py import MPI
+import shutil
 import math
+
+
+def monitor_text_petsc(comm=MPI.COMM_WORLD):
+    """
+    A standard text monitor which employs PETSc's system print function
+
+    :param comm: MPI communicator on which rank 0 will host the plot
+    :return: monitor function compatible with petsc4py.PETSc.KSP.setMonitor
+    """
+    from petsc4py import PETSc
+    def monitor(ctx, it, rnorm):
+        PETSc.Sys.Print(f"Iteration: {it:>4d}, |r| = {rnorm:.3e}")
+    return monitor
 
 
 class MonitorMPL:
@@ -36,11 +50,27 @@ class MonitorMPL:
 
 
 def monitor_mpl(comm=MPI.COMM_WORLD):
+    """
+    Monitor a PETSc KSP by drawing a graph using matplotlib.
+
+    :param comm: MPI communicator on which rank 0 will host the plot
+    :return: monitor function compatible with petsc4py.PETSc.KSP.setMonitor
+    """
     return MonitorMPL(comm).monitor
 
 
-def monitor_unicode(comm=MPI.COMM_WORLD):
-    import shutil
+def monitor_unicode_graph(comm=MPI.COMM_WORLD):
+    """
+    Monitor a PETSc KSP by drawing a crude graph in the terminal stdout. We
+    deliberately do not use carriage returns in this function so not to pollute
+    output in text logging as required by, for example, HPCs.
+
+    Since carriage returns are not used, the symbol "D" is employed to signify
+    that the residual has diverged.
+
+    :param comm: MPI communicator on which rank 0 will print
+    :return: monitor function compatible with petsc4py.PETSc.KSP.setMonitor
+    """
     term_sz = shutil.get_terminal_size()
     start_idx = 4  # Buffer carriage idx from y axis labels
 
