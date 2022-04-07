@@ -81,7 +81,8 @@ def monitor_unicode_graph(comm=MPI.COMM_WORLD):
 
     # Characters used to draw lines and superscript exponents
     diverged_char = "D"
-    chars = "_,⎵.-'¯`⎴"
+    # chars = "_,⎵.-'¯`⎴"
+    chars = "⎺⎻—⎼⎽_"[::-1]
     num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁴⁵⁶⁷⁹")
 
     rnorms = []         # Store residuals

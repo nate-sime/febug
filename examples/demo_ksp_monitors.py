@@ -49,5 +49,6 @@ uh = dolfinx.fem.Function(V)
 
 import febug.monitors
 solver.setMonitor(febug.monitors.monitor_mpl())
-solver.setMonitor(febug.monitors.monitor_unicode())
+# solver.setMonitor(febug.monitors.monitor_unicode_graph())
+solver.setMonitor(febug.monitors.monitor_text_petsc())
 solver.solve(b, uh.vector)
