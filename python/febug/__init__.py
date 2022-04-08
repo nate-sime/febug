@@ -4,7 +4,6 @@ from .plot import (plot, plot_meshtags, plot_dofmap, plot_warp, plot_quiver,
 
 
 def overload_dolfinx():
-    import febug.dolfinx
     sys.modules["dolfinx"] = febug.dolfinx
 
 

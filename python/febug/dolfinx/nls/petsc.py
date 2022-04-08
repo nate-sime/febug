@@ -1,9 +1,7 @@
 from mpi4py import MPI
 import dolfinx.nls.petsc
 
-import febug
-
-from dolfinx.nls.petsc import *
+from python import febug
 
 
 class NewtonSolver(dolfinx.nls.petsc.NewtonSolver):

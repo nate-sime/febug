@@ -1,8 +1,7 @@
 import typing
-import ufl
 import dolfinx.fem.petsc
 
-import febug
+from python import febug
 
 from dolfinx.fem.petsc import *
 

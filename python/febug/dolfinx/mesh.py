@@ -1,9 +1,7 @@
 import numpy as np
 import dolfinx.log
 
-import febug
-
-from dolfinx.mesh import *
+from python import febug
 
 
 def meshtags(mesh: dolfinx.mesh.Mesh, dim: int, indices: np.ndarray,

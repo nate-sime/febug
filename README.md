@@ -13,7 +13,9 @@ code manually. You may also wish to have your script automatically checked
 by injecting `febug` into your `dolfinx` script
 
 ```python
-import febug
+
+from python import febug
+
 febug.overload_dolfinx()
 febug.error_on_issue = False
 ```
@@ -37,7 +39,9 @@ coefficients which depend on the inverse of the solution. Consider the
 following snippet
 
 ```python
-import febug
+
+from python import febug
+
 febug.overload_dolfinx()
 febug.error_on_issue = True
 
@@ -49,7 +53,7 @@ V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
 v = ufl.TestFunction(V)
 
 u = dolfinx.fem.Function(V)
-u.interpolate(lambda x: x[0]*x[1])
+u.interpolate(lambda x: x[0] * x[1])
 
 F = ufl.inner(1 / u, v) * ufl.dx
 

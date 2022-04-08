@@ -47,8 +47,8 @@ solver.setFromOptions()
 solver.setOperators(A)
 uh = dolfinx.fem.Function(V)
 
-import febug.monitors
-solver.setMonitor(febug.monitors.monitor_mpl())
+import python.febug.monitors
+solver.setMonitor(python.febug.monitors.monitor_mpl())
 # solver.setMonitor(febug.monitors.monitor_unicode_graph())
-solver.setMonitor(febug.monitors.monitor_text_petsc())
+solver.setMonitor(python.febug.monitors.monitor_text_petsc())
 solver.solve(b, uh.vector)

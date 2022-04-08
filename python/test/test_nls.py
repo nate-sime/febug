@@ -1,6 +1,5 @@
 import pytest
 
-import febug.dolfinx.nls
 import dolfinx
 import ufl
 from mpi4py import MPI

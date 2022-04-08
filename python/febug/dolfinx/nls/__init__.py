@@ -3,7 +3,7 @@ import dolfinx.fem
 import ufl
 import numpy as np
 
-import febug
+from python import febug
 
 
 def search_for_potential_singularity(

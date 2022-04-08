@@ -4,8 +4,7 @@ from mpi4py import MPI
 import dolfinx
 import dolfinx.mesh
 import dolfinx.fem
-import febug
-
+from python import febug
 
 meshes1D = [dolfinx.mesh.create_unit_interval(MPI.COMM_WORLD, 1)]
 meshes2D = [dolfinx.mesh.create_unit_square(MPI.COMM_WORLD, 1, 1)]

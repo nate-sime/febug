@@ -1,8 +1,7 @@
-import numpy as np
 from mpi4py import MPI
 import dolfinx
 import pyvista
-import febug
+from python import febug
 
 # Create mesh and define function space
 mesh = dolfinx.mesh.create_rectangle(

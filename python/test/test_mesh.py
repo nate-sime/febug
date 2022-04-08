@@ -1,4 +1,5 @@
-import febug
+from python import febug
+
 febug.overload_dolfinx()
 febug.error_on_issue = True
 
