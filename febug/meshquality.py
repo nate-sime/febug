@@ -1,82 +1,72 @@
+import math
 import dolfinx.mesh
-import numba
 import numpy as np
-import tqdm
+from mpi4py import MPI
 
 
 def dihedral_angles(mesh: dolfinx.mesh.Mesh):
-    mesh.topology.create_connectivity(3, 1)
-    mesh.topology.create_connectivity(1, 0)
-    c2e = mesh.topology.connectivity(3, 1)
-    e2v = mesh.topology.connectivity(1, 0)
-
-    x = mesh.geometry.x
-
-    dhangles = []
-    for c in tqdm.trange(mesh.topology.index_map(3).size_local):
-        edges = c2e.links(c)
-
-        for i in range(6):
-            i0 = e2v.links(edges[i])[0]
-            i1 = e2v.links(edges[i])[1]
-            i2 = e2v.links(edges[5-i])[0]
-            i3 = e2v.links(edges[5-i])[1]
-
-            p0 = x[i0]
-            v1 = x[i1] - p0
-            v2 = x[i2] - p0
-            v3 = x[i3] - p0
-
-            print(i0, i1, i2, i3)
-
-            v1 /= np.linalg.norm(v1)
-            v2 /= np.linalg.norm(v2)
-            v3 /= np.linalg.norm(v3)
-
-            cphi = (v2.dot(v3) - v1.dot(v2)*v1.dot(v3)) / \
-                   (np.linalg.norm(np.cross(v1, v2)) * np.linalg.norm(np.cross(v1, v3)))
-
-            dhangle = np.arccos(cphi)
-            dhangles.append(dhangle)
-    return dhangles
+    import febug.cpp.meshquality
+    return febug.cpp.meshquality.dihedral_angle(mesh)
 
 
-def dihedral_angles2(mesh: dolfinx.mesh.Mesh):
-    mesh.topology.create_connectivity(3, 1)
-    mesh.topology.create_connectivity(1, 0)
-    c2e = mesh.topology.connectivity(3, 1)
-    e2v = mesh.topology.connectivity(1, 0)
+def histogram_gather(data, bins, weights=None,
+                     comm=MPI.COMM_WORLD, rank=0):
+    counts, edges = np.histogram(
+        data, bins=bins, weights=weights)
 
-    x = mesh.geometry.x
+    if comm.rank == rank:
+        counts_global = np.zeros_like(counts)
+    else:
+        counts_global = None
 
-    ncells = mesh.topology.index_map(3).size_local
-    nedges = mesh.topology.index_map(1).size_local
+    comm.Reduce([counts, MPI.INT], [counts_global, MPI.INT], op=MPI.SUM,
+                root=rank)
 
-    dhangles = np.zeros(nedges, dtype=np.double)
-    half_planes = []
-    for c in tqdm.trange(ncells):
-        edges = c2e.links(c)
+    return counts_global, edges
 
-        for i in range(6):
-            i0 = e2v.links(edges[i])[0]
-            i1 = e2v.links(edges[i])[1]
-            i2 = e2v.links(edges[5-i])[0]
-            i3 = e2v.links(edges[5-i])[1]
 
-            p0 = x[i0]
-            v1 = x[i1] - p0
-            v2 = x[i2] - p0
-            v3 = x[i3] - p0
+def hist_unicode(data, bins, weights=None,
+                 cmd_width=80, title=None, comm=MPI.COMM_WORLD):
+    counts, edges = histogram_gather(
+        data, bins=bins, weights=weights, comm=comm, rank=0)
 
-            print(i0, i1, i2, i3)
+    if comm.rank != 0:
+        return
 
-            v1 /= np.linalg.norm(v1)
-            v2 /= np.linalg.norm(v2)
-            v3 /= np.linalg.norm(v3)
+    if title is not None:
+        print(title)
 
-            cphi = (v2.dot(v3) - v1.dot(v2)*v1.dot(v3)) / \
-                   (np.linalg.norm(np.cross(v1, v2)) * np.linalg.norm(np.cross(v1, v3)))
+    barv = "▏▎▍▌▋▊▉█"
+    barh = "█▇▆▅▄▃▂▁"
 
-            dhangle = np.arccos(cphi)
-            dhangles.append(dhangle)
-    return dhangles
+    xaxis_tick_buffer = 8
+
+    x_intervals = np.logspace(
+        0, math.ceil(math.log10(counts.max())), cmd_width + 1)
+    num_full_blks = np.searchsorted(x_intervals, counts)
+
+    # Draw the main bar plots
+    print(f"{edges[0]:>{xaxis_tick_buffer}.2f} _", flush=True)
+    for j in range(1, len(edges)):
+        print(f"{edges[j]:>{xaxis_tick_buffer}.2f} _", end="", flush=True)
+        print(barv[-1] * num_full_blks[j-1])
+
+    # Figure out x ticks and their spacing
+    major_ticks = np.arange(0, math.ceil(math.log10(counts.max()))+1)
+    tick_pos = np.searchsorted(x_intervals, 10**major_ticks)
+
+    pos = xaxis_tick_buffer + 2
+    tick_str = "".join(
+        "┊" if idx in tick_pos else " " for idx in range(cmd_width+1))
+    print(" "*pos + tick_str)
+
+    num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
+    xticks_str = list(" " * (pos + cmd_width))
+
+    for tick in major_ticks:
+        tick_label = f"10{str(tick).translate(num2ss)}"
+        offset = -1
+        local_pos_left = tick_pos[tick] + pos + offset
+        local_pos_right = tick_pos[tick] + pos + len(tick_label) + offset
+        xticks_str[local_pos_left:local_pos_right] = tick_label
+    print("".join(xticks_str))

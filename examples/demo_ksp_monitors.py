@@ -13,6 +13,11 @@ mesh = dolfinx.mesh.create_box(
     [16, 16, 16], dolfinx.mesh.CellType.tetrahedron,
     dolfinx.mesh.GhostMode.shared_facet)
 
+import febug.meshquality
+febug.meshquality.hist_unicode(
+    np.degrees(febug.meshquality.dihedral_angles(mesh)),
+    bins=np.linspace(0, 180, 10), cmd_width=80, title="Dihedral angles")
+
 x = ufl.SpatialCoordinate(mesh)
 f = ufl.sin(ufl.pi*x[0])*ufl.sin(ufl.pi*x[1])*ufl.sin(ufl.pi*x[2])
 
@@ -49,6 +54,6 @@ uh = dolfinx.fem.Function(V)
 
 import febug.monitors
 solver.setMonitor(febug.monitors.monitor_mpl())
-# solver.setMonitor(febug.monitors.monitor_unicode_graph())
-solver.setMonitor(febug.monitors.monitor_text_petsc())
+solver.setMonitor(febug.monitors.monitor_unicode_graph())
+# solver.setMonitor(febug.monitors.monitor_text_petsc())
 solver.solve(b, uh.vector)
