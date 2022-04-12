@@ -83,7 +83,7 @@ def monitor_unicode_graph(comm=MPI.COMM_WORLD):
     diverged_char = "D"
     # chars = "_,⎵.-'¯`⎴"
     chars = "⎺⎻—⎼⎽_"[::-1]
-    num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁴⁵⁶⁷⁹")
+    num2ss = str.maketrans("-0123456789", "⁻⁰¹²³⁴⁵⁶⁷⁸⁹")
 
     rnorms = []         # Store residuals
     intervals = [0]     # Store exponents
