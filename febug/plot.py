@@ -20,8 +20,7 @@ def _(V: dolfinx.fem.FunctionSpace):
     return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(V))
 
 
-@functools.singledispatch
-def plot(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
+def plot_mesh(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     grid = _to_pyvista_grid(mesh, mesh.topology.dim)
@@ -34,8 +33,8 @@ def plot(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
     return plotter
 
 
-@plot.register
-def _(u: dolfinx.fem.function.Function, plotter: pyvista.Plotter=None):
+def plot_function(u: dolfinx.fem.function.Function,
+                  plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = u.function_space.mesh
@@ -185,5 +184,25 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
         plotter.view_xy()
+
+    return plotter
+
+
+def plot_mesh_quality(mesh: dolfinx.mesh.Mesh, tdim: int,
+                      plotter: pyvista.Plotter=None,
+                      quality_measure: str = "scaled_jacobian",
+                      entities=None,
+                      progress_bar: bool=False):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+    if mesh.topology.index_map(tdim) is None:
+        mesh.topology.create_entities(tdim)
+    mesh_grid = _to_pyvista_grid(mesh, tdim, entities)
+
+    qual = mesh_grid.compute_cell_quality(
+        quality_measure=quality_measure, progress_bar=progress_bar)
+
+    qual.set_active_scalars("CellQuality")
+    plotter.add_mesh(qual, show_scalar_bar=True)
 
     return plotter

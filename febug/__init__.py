@@ -1,6 +1,7 @@
 import sys
-from .plot import (plot, plot_meshtags, plot_dofmap, plot_warp, plot_quiver,
-                   plot_entity_indices)
+from .plot import (plot_mesh, plot_function, plot_meshtags, plot_dofmap,
+                   plot_warp, plot_quiver, plot_entity_indices,
+                   plot_mesh_quality)
 
 
 def overload_dolfinx():

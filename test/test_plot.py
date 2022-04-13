@@ -16,7 +16,7 @@ meshes3D = [dolfinx.mesh.create_unit_cube(MPI.COMM_WORLD, 1, 1, 1)]
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_function(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("CG", p)))
-    febug.plot(u)
+    febug.plot_function(u)
 
 
 @pytest.mark.parametrize(
@@ -43,7 +43,7 @@ def test_plot_quiver(p, mesh):
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 def test_plot_mesh(mesh):
-    febug.plot(mesh)
+    febug.plot_mesh(mesh)
 
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
@@ -61,3 +61,10 @@ def test_plot_meshtags(mesh):
         values = np.ones_like(indices, dtype=np.int32)
         mt = dolfinx.mesh.meshtags(mesh, t, indices, values)
         febug.plot_meshtags(mt)
+
+
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+def test_plot_mesh_quality(mesh):
+    D = mesh.topology.dim
+    for d in range(1, D+1):
+        febug.plot_mesh_quality(mesh, d)

@@ -3,6 +3,7 @@ import dolfinx
 from mpi4py import MPI
 import febug.meshquality
 import matplotlib.pyplot as plt
+import pyvista
 
 
 def generate_initial_mesh(algorithm):
@@ -41,29 +42,41 @@ def generate_initial_mesh(algorithm):
     return mesh
 
 
-for algorithm in (1, 3, 4, 7, 10):
+if MPI.COMM_WORLD.rank == 0:
+    fig, axs = plt.subplots(1, 3, sharey=True)
+subplotter = pyvista.Plotter(shape=(1, 3))
+
+for ax_num, algorithm in enumerate((1, 4, 7)):
+    subplotter.subplot(0, ax_num)
+    subplotter.add_title(f"Algorithm {algorithm}")
+
     counts = []
-    edges = np.linspace(0, 180, 50)
+    edges = np.linspace(0, 90, 50)
     for j in range(3):
         if j == 0:
             mesh = generate_initial_mesh(algorithm)
+            febug.plot.plot_mesh_quality(mesh, mesh.topology.dim,
+                                         plotter=subplotter)
         else:
             mesh.topology.create_connectivity(1, 0)
             mesh = dolfinx.mesh.refine(mesh, redistribute=True)
 
-        dangles = np.degrees(febug.meshquality.dihedral_angles(mesh))
         count, _ = febug.meshquality.histogram_gather(
-            dangles, bins=edges)
+            febug.meshquality.pyvista_entity_quality(
+                mesh, mesh.topology.dim, quality_measure="min_angle"),
+            bins=edges)
 
         if mesh.comm.rank == 0:
-            plt.bar(edges[:-1], count, width=edges[1:] - edges[:-1], zorder=-j)
+            axs[ax_num].bar(edges[:-1], count, width=edges[1:] - edges[:-1],
+                      zorder=-j)
 
     if mesh.comm.rank == 0:
-        plt.gca().set_yscale("log")
-        plt.grid()
-        plt.xlim((edges.min(), edges.max()))
-        plt.xlabel("dihedral angle")
-        plt.ylabel("frequency")
-        plt.title(f"Algorithm {algorithm}")
-        plt.savefig(f"algorithm {algorithm}.png", bbox_inches="tight")
-        plt.clf()
+        axs[ax_num].set_yscale("log")
+        axs[ax_num].grid()
+        axs[ax_num].set_xlim((edges.min(), edges.max()))
+        axs[ax_num].set_xlabel("minimum dihedral angle")
+        if ax_num == 0:
+            axs[ax_num].set_ylabel("frequency")
+        axs[ax_num].set_title(f"Algorithm {algorithm}")
+plt.show()
+subplotter.show()

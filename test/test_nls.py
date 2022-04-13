@@ -26,5 +26,9 @@ def test_singularity_finder_residual(u_lmbda_has_zero):
         assert issues[0][0].name == u.name
         assert len(issues[0][1]) > 0 if has_zero else len(issues[0][1]) == 0
 
-    do_test(F)
-    do_test(dolfinx.fem.form(F))
+    febug.error_on_issue = True
+
+    with pytest.raises(febug.FebugError):
+        do_test(F)
+    with pytest.raises(febug.FebugError):
+        do_test(dolfinx.fem.form(F))

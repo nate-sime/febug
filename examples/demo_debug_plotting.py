@@ -14,7 +14,7 @@ subplotter = pyvista.Plotter(shape=(2, 3))
 # -- mesh
 subplotter.subplot(0, 0)
 subplotter.add_title("mesh")
-febug.plot(mesh, plotter=subplotter)
+febug.plot_mesh(mesh, plotter=subplotter)
 
 # -- CG1 dofmap and ordering
 V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))

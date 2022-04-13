@@ -15,8 +15,9 @@ mesh = dolfinx.mesh.create_box(
 
 import febug.meshquality
 febug.meshquality.hist_unicode(
-    np.degrees(febug.meshquality.dihedral_angles(mesh)),
-    bins=np.linspace(0, 180, 10), cmd_width=80, title="Dihedral angles")
+    febug.meshquality.pyvista_entity_quality(
+        mesh, mesh.topology.dim, quality_measure="min_angle"),
+    np.linspace(0, 180, 10), title="Minimum dihedral angle")
 
 x = ufl.SpatialCoordinate(mesh)
 f = ufl.sin(ufl.pi*x[0])*ufl.sin(ufl.pi*x[1])*ufl.sin(ufl.pi*x[2])

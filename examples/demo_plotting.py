@@ -15,7 +15,7 @@ subplotter = pyvista.Plotter(shape=(3, 3))
 # -- mesh
 subplotter.subplot(0, 0)
 subplotter.add_title("mesh")
-febug.plot(mesh, plotter=subplotter)
+febug.plot_mesh(mesh, plotter=subplotter)
 
 # -- function
 subplotter.subplot(0, 1)
@@ -23,7 +23,7 @@ subplotter.add_title("CG1")
 V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
 u = dolfinx.fem.Function(V)
 u.interpolate(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]))
-febug.plot(u, plotter=subplotter)
+febug.plot_function(u, plotter=subplotter)
 
 # -- high order function
 subplotter.subplot(0, 2)
@@ -31,7 +31,7 @@ subplotter.add_title("CG2")
 V = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
 u = dolfinx.fem.Function(V)
 u.interpolate(lambda x: np.sin(np.pi*x[0])*np.sin(np.pi*x[1]))
-febug.plot(u, plotter=subplotter)
+febug.plot_function(u, plotter=subplotter)
 
 # -- vector function magnitude
 subplotter.subplot(1, 0)
@@ -42,7 +42,7 @@ u.interpolate(lambda x: np.stack((-x[1], x[0])))
 u_scalar = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("CG", 1)))
 u_scalar.interpolate(dolfinx.fem.Expression(ufl.inner(u, u),
                      u_scalar.function_space.element.interpolation_points))
-febug.plot(u_scalar, plotter=subplotter)
+febug.plot_function(u_scalar, plotter=subplotter)
 
 # -- vector function
 subplotter.subplot(1, 1)

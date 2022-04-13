@@ -2,11 +2,19 @@ import math
 import dolfinx.mesh
 import numpy as np
 from mpi4py import MPI
+import febug.plot
 
 
-def dihedral_angles(mesh: dolfinx.mesh.Mesh):
-    import febug.cpp.meshquality
-    return febug.cpp.meshquality.dihedral_angle(mesh)
+def pyvista_entity_quality(
+        mesh: dolfinx.mesh.Mesh, tdim, entities=None,
+        quality_measure: str="scaled_jacobian",
+        progress_bar=False):
+    if mesh.topology.index_map(tdim) is None:
+        mesh.topology.create_entities(tdim)
+    pvmesh = febug.plot._to_pyvista_grid(mesh, tdim, entities=entities)
+    qual = pvmesh.compute_cell_quality(quality_measure=quality_measure,
+                                       progress_bar=progress_bar)
+    return qual["CellQuality"]
 
 
 def histogram_gather(data, bins, weights=None,
