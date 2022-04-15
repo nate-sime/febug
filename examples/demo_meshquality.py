@@ -78,5 +78,7 @@ for ax_num, algorithm in enumerate((1, 4, 7)):
         if ax_num == 0:
             axs[ax_num].set_ylabel("frequency")
         axs[ax_num].set_title(f"Algorithm {algorithm}")
-plt.show()
+
+if mesh.comm.rank == 0:
+    plt.show()
 subplotter.show()
