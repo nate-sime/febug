@@ -20,6 +20,33 @@ def _(V: dolfinx.fem.FunctionSpace):
     return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(V))
 
 
+@_to_pyvista_grid.register
+def _(u: dolfinx.fem.Function):
+    mesh = u.function_space.mesh
+
+    bs = u.function_space.dofmap.index_map_bs
+    dof_values = u.x.array.reshape(
+        u.function_space.tabulate_dof_coordinates().shape[0],
+        u.function_space.dofmap.index_map_bs)
+
+    if bs == 2:
+        dof_values = np.hstack(
+            (dof_values, np.zeros((dof_values.shape[0], 3-bs))))
+
+    if np.iscomplexobj(dof_values):
+        dof_values = dof_values.real
+
+    if u.function_space.ufl_element().degree() == 0:
+        grid = _to_pyvista_grid(mesh, mesh.topology.dim)
+        grid.cell_data[u.name] = dof_values
+    else:
+        grid = _to_pyvista_grid(u.function_space)
+        grid.point_data[u.name] = dof_values
+
+    grid.set_active_scalars(u.name)
+    return grid
+
+
 def plot_mesh(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
@@ -37,17 +64,10 @@ def plot_function(u: dolfinx.fem.function.Function,
                   plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
+
     mesh = u.function_space.mesh
 
-    grid = _to_pyvista_grid(u.function_space)
-
-    dof_values = u.x.array
-    if np.iscomplexobj(dof_values):
-        dof_values = dof_values.real
-
-    grid.point_data[u.name] = dof_values
-    grid.set_active_scalars(u.name)
-
+    grid = _to_pyvista_grid(u)
     plotter.add_mesh(grid, scalars=u.name, show_scalar_bar=True)
 
     if mesh.geometry.dim == 2:
@@ -93,17 +113,7 @@ def plot_warp(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
         plotter = pyvista.Plotter()
     mesh = u.function_space.mesh
 
-    grid = _to_pyvista_grid(u.function_space)
-
-    bs = u.function_space.dofmap.index_map_bs
-    plot_values = u.x.array.reshape(
-        u.function_space.tabulate_dof_coordinates().shape[0],
-        u.function_space.dofmap.index_map_bs)
-    if bs < 3:
-        plot_values = np.hstack(
-            (plot_values, np.zeros((plot_values.shape[0], 3-bs))))
-    grid.point_data[u.name] = plot_values
-
+    grid = _to_pyvista_grid(u)
     warped = grid.warp_by_vector(vectors=u.name)
     plotter.add_mesh(warped)
 
@@ -123,16 +133,7 @@ def plot_quiver(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
         plotter = pyvista.Plotter()
     mesh = u.function_space.mesh
 
-    grid = _to_pyvista_grid(u.function_space)
-
-    bs = u.function_space.dofmap.index_map_bs
-    plot_values = u.x.array.reshape(
-        u.function_space.tabulate_dof_coordinates().shape[0],
-        u.function_space.dofmap.index_map_bs)
-    if bs < 3:
-        plot_values = np.hstack(
-            (plot_values, np.zeros((plot_values.shape[0], 3-bs))))
-    grid.point_data[u.name] = plot_values
+    grid = _to_pyvista_grid(u)
 
     geom = pyvista.Arrow()
     glyphs = grid.glyph(orient=u.name, scale=u.name, factor=factor,

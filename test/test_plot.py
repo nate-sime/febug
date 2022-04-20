@@ -14,8 +14,15 @@ meshes3D = [dolfinx.mesh.create_unit_cube(MPI.COMM_WORLD, 1, 1, 1)]
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("p", [1, 2])
-def test_plot_function(p, mesh):
+def test_plot_function_cg(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("CG", p)))
+    febug.plot_function(u)
+
+
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("p", [0, 1, 2])
+def test_plot_function_dg(p, mesh):
+    u = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("DG", p)))
     febug.plot_function(u)
 
 
