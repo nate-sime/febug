@@ -77,7 +77,10 @@ class CMakeBuild(build_ext):
 setup(
     name='febug',
     version=VERSION,
-    packages=['febug'],
+    packages=['febug',
+              'febug.dolfinx',
+              'febug.dolfinx.fem',
+              'febug.dolfinx.nls'],
     # ext_modules=[CMakeExtension('febug.cpp')],
     # cmdclass=dict(build_ext=CMakeBuild),
     install_requires=REQUIREMENTS,

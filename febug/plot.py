@@ -8,6 +8,9 @@ import dolfinx
 import dolfinx.plot
 
 
+entity_label_args = dict(point_size=15, font_size=12, bold=False,
+                         shape_color="white", text_color="black")
+
 @functools.singledispatch
 def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
                      entities=None):
@@ -22,12 +25,13 @@ def _(V: dolfinx.fem.FunctionSpace):
 
 @_to_pyvista_grid.register
 def _(u: dolfinx.fem.Function):
-    mesh = u.function_space.mesh
+    V = u.function_space
+    mesh = V.mesh
 
-    bs = u.function_space.dofmap.index_map_bs
+    bs = V.dofmap.index_map_bs
     dof_values = u.x.array.reshape(
-        u.function_space.tabulate_dof_coordinates().shape[0],
-        u.function_space.dofmap.index_map_bs)
+        V.tabulate_dof_coordinates().shape[0],
+        V.dofmap.index_map_bs)
 
     if bs == 2:
         dof_values = np.hstack(
@@ -36,22 +40,52 @@ def _(u: dolfinx.fem.Function):
     if np.iscomplexobj(dof_values):
         dof_values = dof_values.real
 
-    if u.function_space.ufl_element().degree() == 0:
+    if V.ufl_element().degree() == 0:
         grid = _to_pyvista_grid(mesh, mesh.topology.dim)
-        grid.cell_data[u.name] = dof_values
+        num_dofs_local = V.dofmap.index_map.size_local
+        grid.cell_data[u.name] = dof_values[:num_dofs_local]
     else:
-        grid = _to_pyvista_grid(u.function_space)
+        grid = _to_pyvista_grid(V)
         grid.point_data[u.name] = dof_values
 
     grid.set_active_scalars(u.name)
     return grid
 
 
-def plot_mesh(mesh: dolfinx.cpp.mesh.Mesh, plotter: pyvista.Plotter=None):
+def plot_mesh(mesh: dolfinx.cpp.mesh.Mesh, tdim: int=None,
+              show_owners: bool=False, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
-    grid = _to_pyvista_grid(mesh, mesh.topology.dim)
-    plotter.add_mesh(grid, style="wireframe", line_width=2, color="black")
+
+    if tdim is None:
+        tdim = mesh.topology.dim
+
+    size_local = mesh.topology.index_map(tdim).size_local
+    entities = np.arange(size_local, dtype=np.int32)
+    ghost_entities = np.arange(
+        size_local, size_local + mesh.topology.index_map(tdim).num_ghosts,
+        dtype=np.int32)
+
+    # Plot ghosts first so the z-heightmap shows local entities primarily
+    for grp, color in ((ghost_entities, "pink"), (entities, "black")):
+        if len(grp) == 0:
+            continue
+        if tdim > 0:
+            grid = _to_pyvista_grid(mesh, tdim, entities=grp)
+            plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
+        else:
+            point_cloud = pyvista.PolyData(mesh.geometry.x[grp])
+            plotter.add_mesh(point_cloud, point_size=8, color=color)
+
+    if len(ghost_entities) > 0 and show_owners:
+        ghost_owners = mesh.topology.index_map(tdim).ghost_owners()
+        x_ghost = dolfinx.mesh.compute_midpoints(mesh, tdim, ghost_entities)
+
+        # todo: plot more meaningful data than the neighbourhood comm ghosts
+        ghost_polydata = pyvista.PolyData(x_ghost)
+        ghost_polydata["labels"] = ghost_owners
+        plotter.add_point_labels(ghost_polydata, "labels", point_size=8,
+                                 font_size=24)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -68,6 +102,11 @@ def plot_function(u: dolfinx.fem.function.Function,
     mesh = u.function_space.mesh
 
     grid = _to_pyvista_grid(u)
+
+    if len(grid[u.name]) == 0:
+        # No data on process
+        return plotter
+
     plotter.add_mesh(grid, scalars=u.name, show_scalar_bar=True)
 
     if mesh.geometry.dim == 2:
@@ -85,17 +124,25 @@ def plot_meshtags(meshtags: typing.Union[
         plotter = pyvista.Plotter()
     mesh = meshtags.mesh
 
+    if np.issubdtype(meshtags.values.dtype, np.integer):
+        unique_vals = np.unique(meshtags.values)
+        annotations = dict(zip(unique_vals, map(str, unique_vals)))
+    else:
+        annotations = None
+
     if meshtags.dim > 0:
-        edges = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
-        edges.cell_data[meshtags.name] = meshtags.values
-        edges.set_active_scalars(meshtags.name)
-        plotter.add_mesh(edges, show_scalar_bar=True)
+        entities = _to_pyvista_grid(mesh, meshtags.dim, meshtags.indices)
+        entities.cell_data[meshtags.name] = meshtags.values
+        entities.set_active_scalars(meshtags.name)
     else:
         x = mesh.geometry.x[meshtags.indices]
-        point_cloud = pyvista.PolyData(x)
-        point_cloud[meshtags.name] = meshtags.values
+        entities = pyvista.PolyData(x)
+        entities[meshtags.name] = meshtags.values
 
-        plotter.add_mesh(point_cloud)
+    if len(entities[meshtags.name]) == 0:
+        return plotter
+
+    plotter.add_mesh(entities, show_scalar_bar=True, annotations=annotations)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -151,14 +198,29 @@ def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = V.mesh
-    mesh_grid = _to_pyvista_grid(mesh, mesh.topology.dim)
+    plot_mesh(mesh, mesh.topology.dim, plotter=plotter)
 
     x = V.tabulate_dof_coordinates()
-    x_polydata = pyvista.PolyData(x)
-    x_polydata["labels"] = [f"{i}" for i in np.arange(x.shape[0])]
+    if x.shape[0] == 0:
+        return plotter
 
-    plotter.add_mesh(mesh_grid, style="wireframe", line_width=2, color="black")
-    plotter.add_point_labels(x_polydata, "labels", point_size=20, font_size=36)
+    size_local = V.dofmap.index_map.size_local
+    num_ghosts = V.dofmap.index_map.num_ghosts
+
+    if size_local > 0:
+        x_local_polydata = pyvista.PolyData(x[:size_local])
+        x_local_polydata["labels"] = [f"{i}" for i in np.arange(size_local)]
+        plotter.add_point_labels(
+            x_local_polydata, "labels", **entity_label_args,
+            point_color="black")
+
+    if num_ghosts > 0:
+        x_ghost_polydata = pyvista.PolyData(x[size_local:size_local+num_ghosts])
+        x_ghost_polydata["labels"] = [
+            f"{i}" for i in np.arange(size_local, size_local+num_ghosts)]
+        plotter.add_point_labels(
+            x_ghost_polydata, "labels", **entity_label_args,
+            point_color="pink")
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -171,16 +233,29 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
                         plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
-    mesh_grid = _to_pyvista_grid(mesh, mesh.topology.dim)
 
-    entities = np.arange(mesh.topology.index_map(tdim).size_local,
-                         dtype=np.int32)
-    x = dolfinx.mesh.compute_midpoints(mesh, tdim, entities)
-    x_polydata = pyvista.PolyData(x)
-    x_polydata["labels"] = [f"{i}" for i in np.arange(x.shape[0])]
+    plot_mesh(mesh, tdim=tdim, plotter=plotter, show_owners=False)
 
-    plotter.add_mesh(mesh_grid, style="wireframe", line_width=2, color="black")
-    plotter.add_point_labels(x_polydata, "labels", point_size=20, font_size=36)
+    size_local = mesh.topology.index_map(tdim).size_local
+    num_ghosts = mesh.topology.index_map(tdim).num_ghosts
+    entities = np.arange(size_local, dtype=np.int32)
+    ghosts = np.arange(size_local, size_local + num_ghosts, dtype=np.int32)
+
+    if size_local > 0:
+        x = dolfinx.mesh.compute_midpoints(mesh, tdim, entities)
+        x_polydata = pyvista.PolyData(x)
+        x_polydata["labels"] = [f"{i}" for i in np.arange(size_local)]
+        plotter.add_point_labels(x_polydata, "labels", **entity_label_args,
+                                 point_color="grey")
+
+    if num_ghosts > 0:
+        x_ghost = dolfinx.mesh.compute_midpoints(mesh, tdim, ghosts)
+        x_ghost_polydata = pyvista.PolyData(x_ghost)
+        x_ghost_polydata["labels"] = [
+            f"{i}" for i in np.arange(size_local, size_local + num_ghosts)]
+        plotter.add_point_labels(
+            x_ghost_polydata, "labels", **entity_label_args,
+            point_color="pink")
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
@@ -191,7 +266,7 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
 
 def plot_mesh_quality(mesh: dolfinx.mesh.Mesh, tdim: int,
                       plotter: pyvista.Plotter=None,
-                      quality_measure: str = "scaled_jacobian",
+                      quality_measure: str="scaled_jacobian",
                       entities=None,
                       progress_bar: bool=False):
     if plotter is None:
@@ -199,6 +274,8 @@ def plot_mesh_quality(mesh: dolfinx.mesh.Mesh, tdim: int,
     if mesh.topology.index_map(tdim) is None:
         mesh.topology.create_entities(tdim)
     mesh_grid = _to_pyvista_grid(mesh, tdim, entities)
+    if mesh_grid.n_points < 1:
+        return plotter
 
     qual = mesh_grid.compute_cell_quality(
         quality_measure=quality_measure, progress_bar=progress_bar)
