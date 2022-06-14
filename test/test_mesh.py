@@ -1,3 +1,5 @@
+import pytest
+
 import febug
 febug.overload_dolfinx()
 febug.error_on_issue = True
@@ -15,7 +17,6 @@ def test_unordered_meshtags():
     indices = np.array([1, 2, 3, 4, 2], dtype=np.int32)
     values = np.array([1.0, 2.0, 3.0, 4.0, 2.0], dtype=np.double)
 
-    try:
+    with pytest.raises(febug.FebugError):
         dolfinx.mesh.meshtags(mesh, mesh.topology.dim, indices, values)
-    except Exception as e:
-        assert isinstance(e, febug.FebugError)
+

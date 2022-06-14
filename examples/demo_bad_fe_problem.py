@@ -32,3 +32,9 @@ bcs = [dolfinx.fem.dirichletbc(value=PETSc.ScalarType(0), dofs=dofs, V=V)]
 
 problem = dolfinx.fem.petsc.NonlinearProblem(F, u, bcs)
 problem = dolfinx.nls.petsc.NewtonSolver(mesh.comm, problem)
+
+# -- We should reuse data structures wherever possible
+J = ufl.derivative(F, u)
+for j in range(11):
+    linear_solver = dolfinx.fem.petsc.LinearProblem(J, F)
+    linear_solver.solve()
