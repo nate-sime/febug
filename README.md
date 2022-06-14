@@ -8,8 +8,8 @@ errors rather than syntax errors.
 
 ## Usage
 
-You can import `febug` and call the library functions to check your  
-code manually. You may also wish to have your script automatically checked 
+You can import `febug` and call the library functions to check your code
+manually. You may also wish to have your script automatically checked
 by injecting `febug` into your `dolfinx` script
 
 ```python
@@ -76,9 +76,10 @@ u at DoFs [ 0  1  4  8 13 15 19 22 24]
 
 ## Plotting
 
-A number of utility methods are provided for plotting using pyvista.
-These are intended for rapidly debugging **small** finite element problems.
-It is emphasised here that these plotting methods are not intended for
-visualising large or intricate finite element models. For visualisation of
-finite element models external packages such as
-[paraview](https://www.paraview.org/) are recommended.
+A number of utility methods are provided for plotting using
+[`pyvista`](https://github.com/pyvista/pyvista). These are intended for rapidly
+debugging **small** finite element problems. It is emphasised here that these
+plotting methods are not intended for visualising large or intricate finite
+element models. For visualisation of finite element models custom code written
+with [`pyvista`](https://github.com/pyvista/pyvista) or external packages such
+as [paraview](https://www.paraview.org/) are recommended.
