@@ -83,3 +83,45 @@ plotting methods are not intended for visualising large or intricate finite
 element models. For visualisation of finite element models custom code written
 with [`pyvista`](https://github.com/pyvista/pyvista) or external packages such
 as [paraview](https://www.paraview.org/) are recommended.
+
+Consider the following examples where serial and parallel with two processes
+runs are demonstrated
+
+```python
+mesh = dolfinx.mesh.create_rectangle(
+    MPI.COMM_WORLD, ((0.0, 0.0), (1.0, 1.0)), (3, 3),
+    dolfinx.mesh.CellType.quadrilateral)
+```
+
+- Mesh:
+
+    ```python
+    febug.plot_mesh(mesh)
+    ```
+
+    | Serial    | Process 0 | Process 1 |
+    | --------- | --------- | --------- |
+    | ![Mesh plot](res/img/mesh.png) | ![Mesh plot rank0](res/img/mesh_p0_s2.png) | ![Mesh plot rank0](res/img/mesh_p1_s2.png) |
+
+- Mesh entity indices:
+
+    ```python
+    febug.plot_entity_indices(mesh, 0)
+    ```
+
+    | Dim | Serial    | Process 0 | Process 1 |
+    | --- | --------- | --------- | --------- |
+    | 0 | ![Mesh plot](res/img/entity_indices_0.png) | ![Mesh plot rank0](res/img/entity_indices_0_p0_s2.png) | ![Mesh plot rank0](res/img/entity_indices_0_p1_s2.png) |
+    | 1 | ![Mesh plot](res/img/entity_indices_1.png) | ![Mesh plot rank0](res/img/entity_indices_1_p0_s2.png) | ![Mesh plot rank0](res/img/entity_indices_1_p1_s2.png) |
+    | 2 | ![Mesh plot](res/img/entity_indices_2.png) | ![Mesh plot rank0](res/img/entity_indices_2_p0_s2.png) | ![Mesh plot rank0](res/img/entity_indices_2_p1_s2.png) |
+
+- DoF maps:
+
+    ```python
+    V = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
+    febug.plot_dofmap(V)
+    ```
+
+    | Serial    | Process 0 | Process 1 |
+    | --------- | --------- | --------- |
+    | ![Mesh plot](res/img/dofmap.png) | ![Mesh plot rank0](res/img/dofmap_p0_s2.png) | ![Mesh plot rank0](res/img/dofmap_p1_s2.png) |

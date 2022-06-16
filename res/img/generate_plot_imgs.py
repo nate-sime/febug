@@ -26,24 +26,27 @@ def newplt():
     return plotter
 
 
+# Serial only plots
 if mesh.comm.size == 1:
     febug.plot_function(u, plotter=newplt()).screenshot("function.png", **default_args)
     febug.plot_quiver(w, plotter=newplt()).screenshot("quiver.png", **default_args)
     febug.plot_warp(w, plotter=newplt()).screenshot("warp.png", **default_args)
 
 
+# Generate meaningful filename
 def fn(fname):
     if mesh.comm.size == 1:
         return fname
     splt = fname.split(".")
-    return f"{splt[0]}_ghosts_np{mesh.comm.rank}_sz{mesh.comm.size}.{splt[1]}"
+    return f"{splt[0]}_p{mesh.comm.rank}_s{mesh.comm.size}.{splt[1]}"
 
 
+# Serial and parallel plots
 febug.plot_mesh(mesh, plotter=newplt()).screenshot(
     fn("mesh.png"), **default_args)
 for tdim in range(mesh.topology.dim+1):
     mesh.topology.create_entities(tdim)
     febug.plot_entity_indices(mesh, tdim, plotter=newplt()).screenshot(
-        fn(f"enitity_indices_{tdim}.png"), **default_args)
+        fn(f"entity_indices_{tdim}.png"), **default_args)
 febug.plot_dofmap(V, plotter=newplt()).screenshot(
     fn("dofmap.png"), **default_args)
