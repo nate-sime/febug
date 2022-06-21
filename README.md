@@ -90,7 +90,8 @@ runs are demonstrated
 ```python
 mesh = dolfinx.mesh.create_rectangle(
     MPI.COMM_WORLD, ((0.0, 0.0), (1.0, 1.0)), (3, 3),
-    dolfinx.mesh.CellType.quadrilateral)
+    dolfinx.mesh.CellType.quadrilateral,
+    dolfinx.mesh.GhostMode.shared_facet)
 ```
 
 - Mesh:
@@ -106,7 +107,8 @@ mesh = dolfinx.mesh.create_rectangle(
 - Mesh entity indices:
 
     ```python
-    febug.plot_entity_indices(mesh, 0)
+    for tdim in range(mesh.topology.dim):
+        febug.plot_entity_indices(mesh, tdim)
     ```
 
     | Dim | Serial    | Process 0 | Process 1 |
@@ -122,6 +124,32 @@ mesh = dolfinx.mesh.create_rectangle(
     febug.plot_dofmap(V)
     ```
 
-    | Serial    | Process 0 | Process 1 |
-    | --------- | --------- | --------- |
-    | ![Mesh plot](res/img/dofmap.png) | ![Mesh plot rank0](res/img/dofmap_p0_s2.png) | ![Mesh plot rank0](res/img/dofmap_p1_s2.png) |
+    | Element | Serial    | Process 0 | Process 1 |
+    | ------- | --------- | --------- | --------- |
+    | CG1     | ![Mesh plot](res/img/dofmap_CG1.png)  | ![Mesh plot rank0](res/img/dofmap_CG1_p0_s2.png)  | ![Mesh plot rank0](res/img/dofmap_CG1_p1_s2.png)  |
+    | CG2     | ![Mesh plot](res/img/dofmap_CG2.png)  | ![Mesh plot rank0](res/img/dofmap_CG2_p0_s2.png)  | ![Mesh plot rank0](res/img/dofmap_CG2_p1_s2.png)  |
+    | DG0     | ![Mesh plot](res/img/dofmap_DG0.png)  | ![Mesh plot rank0](res/img/dofmap_DG0_p0_s2.png)  | ![Mesh plot rank0](res/img/dofmap_DG0_p1_s2.png)  |
+    | DPC1    | ![Mesh plot](res/img/dofmap_DPC1.png) | ![Mesh plot rank0](res/img/dofmap_DPC1_p0_s2.png) | ![Mesh plot rank0](res/img/dofmap_DPC1_p1_s2.png) |
+    | Bubble  | ![Mesh plot](res/img/dofmap_Bubble3.png) | ![Mesh plot rank0](res/img/dofmap_Bubble3_p0_s2.png) | ![Mesh plot rank0](res/img/dofmap_Bubble3_p1_s2.png) |
+    | CR      | ![Mesh plot](res/img/dofmap_CR1.png) | ![Mesh plot rank0](res/img/dofmap_CR1_p0_s2.png) | ![Mesh plot rank0](res/img/dofmap_CR1_p1_s2.png) |
+
+- Function DoF values:
+
+    ```python
+    V = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
+    u = dolfinx.fem.Function(V)
+    u.interpolate(lambda x: x[0]*x[1])
+    plotter = pyvista.Plotter()
+    febug.plot_function(u, plotter=plotter)
+    febug.plot_mesh(mesh, plotter=plotter)
+    febug.plot_function_dofs(u, plotter=plotter)
+    ```
+
+    | Element | Serial    | Process 0 | Process 1 |
+    | ------- | --------- | --------- | --------- |
+    | CG1     | ![Mesh plot](res/img/function_dofmap_CG1.png)  | ![Mesh plot rank0](res/img/function_dofmap_CG1_p0_s2.png)  | ![Mesh plot rank0](res/img/function_dofmap_CG1_p1_s2.png)  |
+    | CG2     | ![Mesh plot](res/img/function_dofmap_CG2.png)  | ![Mesh plot rank0](res/img/function_dofmap_CG2_p0_s2.png)  | ![Mesh plot rank0](res/img/function_dofmap_CG2_p1_s2.png)  |
+    | DG0     | ![Mesh plot](res/img/function_dofmap_DG0.png)  | ![Mesh plot rank0](res/img/function_dofmap_DG0_p0_s2.png)  | ![Mesh plot rank0](res/img/function_dofmap_DG0_p1_s2.png)  |
+    | DPC1    | ![Mesh plot](res/img/function_dofmap_DPC1.png) | ![Mesh plot rank0](res/img/function_dofmap_DPC1_p0_s2.png) | ![Mesh plot rank0](res/img/function_dofmap_DPC1_p1_s2.png) |
+    | Bubble  | ![Mesh plot](res/img/function_dofmap_Bubble3.png) | ![Mesh plot rank0](res/img/function_dofmap_Bubble3_p0_s2.png) | ![Mesh plot rank0](res/img/function_dofmap_Bubble3_p1_s2.png) |
+    | CR      | ![Mesh plot](res/img/function_dofmap_CR1.png) | ![Mesh plot rank0](res/img/function_dofmap_CR1_p0_s2.png) | ![Mesh plot rank0](res/img/function_dofmap_CR1_p1_s2.png) |

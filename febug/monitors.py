@@ -92,6 +92,10 @@ def monitor_unicode_graph(comm=MPI.COMM_WORLD):
         if comm.rank != 0:
             return
 
+        # Reset the carriage idx on new solve
+        if it == 0:
+            carriage_idx[0] = 0
+
         # Cannot take log10(0.0)
         if rnorm == 0.0:
             print("\nrnorm = 0.0")

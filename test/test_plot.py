@@ -66,6 +66,25 @@ def test_plot_dofmap(p, mesh):
     febug.plot_dofmap(V)
 
 
+_plot_elements = [("CG", 1), ("CG", 2), ("DG", 0), ("DG", 1)]
+
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("e", _plot_elements)
+def test_plot_function_dofs(e, mesh):
+    V = dolfinx.fem.FunctionSpace(mesh, e)
+    u = dolfinx.fem.Function(V)
+    febug.plot_function_dofs(u, fmt=".3e")
+
+
+@pytest.mark.parametrize("vec_dim", [2, 3, 4])
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("e", _plot_elements)
+def test_plot_vector_function_dofs(e, mesh, vec_dim):
+    V = dolfinx.fem.VectorFunctionSpace(mesh, e, dim=vec_dim)
+    u = dolfinx.fem.Function(V)
+    febug.plot_function_dofs(u, fmt=".3e")
+
+
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 def test_plot_meshtags(mesh):
     for t in range(mesh.topology.dim + 1):

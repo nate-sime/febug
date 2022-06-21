@@ -229,6 +229,48 @@ def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
     return plotter
 
 
+def plot_function_dofs(u: dolfinx.fem.function.Function,
+                       fmt: str=".2f",
+                       plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    V = u.function_space
+    mesh = V.mesh
+
+    x = V.tabulate_dof_coordinates()
+    if x.shape[0] == 0:
+        return plotter
+
+    size_local = V.dofmap.index_map.size_local
+    num_ghosts = V.dofmap.index_map.num_ghosts
+    bs = V.dofmap.bs
+    u_arr = u.x.array.reshape((-1, bs))
+    str_formatter = lambda x: "\n".join((f"{u_:{fmt}}" for u_ in x))
+
+    if size_local > 0:
+        x_local_polydata = pyvista.PolyData(x[:size_local])
+        x_local_polydata["labels"] = list(
+            map(str_formatter, u_arr[:size_local]))
+        plotter.add_point_labels(
+            x_local_polydata, "labels", **entity_label_args,
+            point_color="black")
+
+    if num_ghosts > 0:
+        x_ghost_polydata = pyvista.PolyData(x[size_local:size_local+num_ghosts])
+        x_ghost_polydata["labels"] = list(
+            map(str_formatter, u_arr[size_local:size_local+num_ghosts]))
+        plotter.add_point_labels(
+            x_ghost_polydata, "labels", **entity_label_args,
+            point_color="pink")
+
+    if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
 def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
                         plotter: pyvista.Plotter=None):
     if plotter is None:
