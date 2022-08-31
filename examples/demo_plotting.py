@@ -41,7 +41,7 @@ u = dolfinx.fem.Function(V, dtype=np.float64)
 u.interpolate(lambda x: np.stack((-x[1], x[0])))
 u_scalar = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("CG", 1)))
 u_scalar.interpolate(dolfinx.fem.Expression(ufl.inner(u, u),
-                     u_scalar.function_space.element.interpolation_points))
+                     u_scalar.function_space.element.interpolation_points()))
 febug.plot_function(u_scalar, plotter=subplotter)
 
 # -- vector function
