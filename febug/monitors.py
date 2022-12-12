@@ -59,7 +59,7 @@ def monitor_mpl(comm=MPI.COMM_WORLD):
     return MonitorMPL(comm).monitor
 
 
-def monitor_unicode_graph(comm=MPI.COMM_WORLD):
+def monitor_unicode_graph(comm=MPI.COMM_WORLD, char_width: int = None):
     """
     Monitor a PETSc KSP by drawing a crude graph in the terminal stdout. We
     deliberately do not use carriage returns in this function so not to pollute
@@ -68,10 +68,16 @@ def monitor_unicode_graph(comm=MPI.COMM_WORLD):
     Since carriage returns are not used, the symbol "D" is employed to signify
     that the residual has diverged.
 
+    :param char_width: Width of the graph defined by number of characters
     :param comm: MPI communicator on which rank 0 will print
     :return: monitor function compatible with petsc4py.PETSc.KSP.setMonitor
     """
-    term_sz = shutil.get_terminal_size()
+    if char_width is None:
+        char_width = shutil.get_terminal_size().columns
+
+    if char_width < 1:
+        raise ValueError(f"Character width must be greater than 0")
+
     start_idx = 4  # Buffer carriage idx from y axis labels
 
     # Given an exponent value, format the yaxis label
@@ -131,7 +137,7 @@ def monitor_unicode_graph(comm=MPI.COMM_WORLD):
 
         # If we've exceeded the terminal column limit, generate a new frame
         # below
-        if carriage_idx[0] + start_idx >= term_sz.columns:
+        if carriage_idx[0] + start_idx >= char_width:
             print(f"\nStarting iteration {it}", flush=True)
             print(y_axis_exp_str(i_exp), end="", flush=True)
             carriage_idx[0] = 0
