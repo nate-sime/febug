@@ -52,7 +52,7 @@ def _(u: dolfinx.fem.Function):
     return grid
 
 
-def plot_mesh(mesh: dolfinx.cpp.mesh.Mesh, tdim: int=None,
+def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
               show_owners: bool=False, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
@@ -116,13 +116,11 @@ def plot_function(u: dolfinx.fem.function.Function,
     return plotter
 
 
-def plot_meshtags(meshtags: typing.Union[
-    dolfinx.cpp.mesh.MeshTags_int8, dolfinx.cpp.mesh.MeshTags_int32,
-    dolfinx.cpp.mesh.MeshTags_int64, dolfinx.mesh.MeshTagsMetaClass],
+def plot_meshtags(meshtags: dolfinx.mesh.MeshTags,
+                  mesh: dolfinx.mesh.Mesh,
                   plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
-    mesh = meshtags.mesh
 
     if np.issubdtype(meshtags.values.dtype, np.integer):
         unique_vals = np.unique(meshtags.values)
