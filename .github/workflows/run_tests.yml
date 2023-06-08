@@ -1,0 +1,14 @@
+name: Run febug tests
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  Run-Tests:
+    runs-on: ubuntu-latest
+    container: dolfinx/dolfinx:stable
+    steps:
+      - name: Install febug
+        run: python3 -m pytest test/
