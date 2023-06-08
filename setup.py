@@ -15,7 +15,7 @@ if sys.version_info < (3, 7):
 
 VERSION = "0.0.0"
 
-REQUIREMENTS = []
+REQUIREMENTS = ["pyvista", "fenics-dolfinx>0.6.0.dev0"]
 
 
 class CMakeExtension(Extension):
