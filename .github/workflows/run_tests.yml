@@ -12,7 +12,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      -
-
       - name: Run unit tests
         run: python3 -m pytest test/
