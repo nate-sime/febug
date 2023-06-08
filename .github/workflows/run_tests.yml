@@ -10,5 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     container: dolfinx/dolfinx:stable
     steps:
-      - name: Install febug
+      - uses: actions/checkout@v3
+
+      - name: Run unit tests
         run: python3 -m pytest test/
