@@ -6,6 +6,12 @@ de**bug**ing. The paradigm here is to check code written for use with
 erroneous or undesireable results as a consequence of numerical scheme 
 errors rather than syntax errors.
 
+`febug` is developed and tested against the nightly build
+`dolfinx/dolfinx:nightly`.
+
+![unit tests badge](https://github.com/nate-sime/febug/actions/workflows/run_tests.yml/badge.svg
+)
+
 ## Usage
 
 You can import `febug` and call the library functions to check your code

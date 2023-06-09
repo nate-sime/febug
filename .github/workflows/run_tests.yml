@@ -1,4 +1,4 @@
-name: Run febug tests
+name: febug unit tests
 
 on:
   pull_request:
