@@ -14,13 +14,13 @@ entity_label_args = dict(point_size=15, font_size=12, bold=False,
 @functools.singledispatch
 def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
                      entities=None):
-    return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(
+    return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(
         mesh, tdim, entities))
 
 
 @_to_pyvista_grid.register
-def _(V: dolfinx.fem.FunctionSpace):
-    return pyvista.UnstructuredGrid(*dolfinx.plot.create_vtk_mesh(V))
+def _(V: dolfinx.fem.FunctionSpaceBase):
+    return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(V))
 
 
 @_to_pyvista_grid.register
@@ -192,7 +192,7 @@ def plot_quiver(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
     return plotter
 
 
-def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
+def plot_dofmap(V: dolfinx.fem.FunctionSpaceBase, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = V.mesh
