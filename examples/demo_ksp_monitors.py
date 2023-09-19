@@ -2,6 +2,7 @@ import numpy as np
 
 import ufl
 import dolfinx
+import dolfinx.fem.petsc
 from ufl import dx, grad, inner
 
 from mpi4py import MPI
@@ -10,8 +11,8 @@ from petsc4py import PETSc
 
 mesh = dolfinx.mesh.create_box(
     MPI.COMM_WORLD, [np.array([0.0, 0.0, 0.0]), np.array([1.0, 1.0, 1.0])],
-    [16, 16, 16], dolfinx.mesh.CellType.tetrahedron,
-    dolfinx.mesh.GhostMode.shared_facet)
+    [16, 16, 16], cell_type=dolfinx.mesh.CellType.tetrahedron,
+    ghost_mode=dolfinx.mesh.GhostMode.shared_facet)
 
 import febug.meshquality
 febug.meshquality.hist_unicode(
