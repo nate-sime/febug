@@ -192,6 +192,56 @@ def plot_quiver(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
     return plotter
 
 
+def plot_streamlines_evenly_spaced_2D(
+        u: dolfinx.fem.Function,
+        start_position: typing.Sequence[float],
+        plotter: pyvista.Plotter=None,
+        **pv_args):
+    assert len(u.ufl_shape) == 1
+    assert u.ufl_shape[0] in (1, 2, 3)
+
+    if plotter is None:
+        plotter = pyvista.Plotter()
+    mesh = u.function_space.mesh
+
+    grid = _to_pyvista_grid(u)
+
+    streamlines = grid.streamlines_evenly_spaced_2D(
+        vectors=u.name, start_position=start_position, **pv_args)
+    plotter.add_mesh(streamlines)
+
+    if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
+def plot_streamlines_from_source(
+        u: dolfinx.fem.Function,
+        source: pyvista.DataSet,
+        plotter: pyvista.Plotter=None,
+        **pv_args):
+    assert len(u.ufl_shape) == 1
+    assert u.ufl_shape[0] in (1, 2, 3)
+
+    if plotter is None:
+        plotter = pyvista.Plotter()
+    mesh = u.function_space.mesh
+
+    grid = _to_pyvista_grid(u)
+
+    streamlines = grid.streamlines_from_source(
+        source, vectors=u.name, **pv_args)
+    plotter.add_mesh(streamlines)
+
+    if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
 def plot_dofmap(V: dolfinx.fem.FunctionSpaceBase, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
