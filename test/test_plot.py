@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+import pyvista
 from mpi4py import MPI
 import dolfinx
 import dolfinx.mesh
@@ -44,12 +45,38 @@ def test_plot_warp(p, mesh):
 @pytest.mark.parametrize(
     "mesh",
     [pytest.param(msh, marks=pytest.mark.xfail(
-        msh.topology.dim == 1, reason="No warping 1D meshes"))
+        msh.topology.dim == 1, reason="No quivering 1D meshes"))
      for msh in meshes1D + meshes2D + meshes3D])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_quiver(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
     febug.plot_quiver(u)
+
+
+@pytest.mark.parametrize(
+    "mesh",
+    [pytest.param(msh, marks=pytest.mark.xfail(
+        msh.topology.dim != 2, reason="Streamline function for 2D only"))
+     for msh in meshes1D + meshes2D + meshes3D])
+@pytest.mark.parametrize("p", [1, 2])
+def test_plot_streamlines_evenly_spaced_2D(p, mesh):
+    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    febug.plot_streamlines_evenly_spaced_2D(u, start_position=(0.5, 0.5, 0.0))
+
+
+@pytest.mark.parametrize(
+    "mesh",
+    [pytest.param(msh, marks=pytest.mark.xfail(
+        msh.topology.dim == 1, reason="Streamlines not valid for 1D"))
+     for msh in meshes1D + meshes2D + meshes3D])
+@pytest.mark.parametrize("p", [1, 2])
+def test_plot_streamlines_from_source(p, mesh):
+    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    pt_cloud_source = pyvista.PolyData(mesh.geometry.x)
+    febug.plot_streamlines_from_source(u, pt_cloud_source, max_time=1.0)
+
+    mesh_source = febug.plot._to_pyvista_grid(mesh, mesh.topology.dim)
+    febug.plot_streamlines_from_source(u, mesh_source, max_time=1.0)
 
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)

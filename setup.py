@@ -9,13 +9,13 @@ from distutils.version import LooseVersion
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
-if sys.version_info < (3, 7):
-    print("Python 3.7 or higher required, please upgrade.")
+if sys.version_info < (3, 10):
+    print("Python 3.10 or higher required, please upgrade.")
     sys.exit(1)
 
-VERSION = "0.0.0"
+VERSION = "2024.0.1"
 
-REQUIREMENTS = ["pyvista", "fenics-dolfinx>0.6.0.dev0"]
+REQUIREMENTS = ["pyvista", "fenics-dolfinx>0.7.0.dev0"]
 
 
 class CMakeExtension(Extension):
