@@ -23,7 +23,7 @@ febug.meshquality.hist_unicode(
 x = ufl.SpatialCoordinate(mesh)
 f = ufl.sin(ufl.pi*x[0])*ufl.sin(ufl.pi*x[1])*ufl.sin(ufl.pi*x[2])
 
-V = dolfinx.fem.FunctionSpace(mesh, ("Lagrange", 2))
+V = dolfinx.fem.functionspace(mesh, ("Lagrange", 2))
 u = ufl.TrialFunction(V)
 v = ufl.TestFunction(V)
 a = dolfinx.fem.form(inner(grad(u), grad(v)) * dx)

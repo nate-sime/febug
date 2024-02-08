@@ -11,7 +11,7 @@ from mpi4py import MPI
                           (lambda x: x[0]+1, False)))
 def test_singularity_finder_residual(u_lmbda_has_zero):
     mesh = dolfinx.mesh.create_unit_square(MPI.COMM_WORLD, 4, 4)
-    V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
+    V = dolfinx.fem.functionspace(mesh, ("CG", 1))
     v = ufl.TestFunction(V)
 
     u_lmbda, has_zero = u_lmbda_has_zero

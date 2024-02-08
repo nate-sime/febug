@@ -4,7 +4,8 @@ from .plot import (plot_mesh, plot_function, plot_meshtags, plot_dofmap,
                    plot_streamlines_evenly_spaced_2D,
                    plot_streamlines_from_source,
                    plot_entity_indices,
-                   plot_mesh_quality, plot_function_dofs)
+                   plot_mesh_quality, plot_function_dofs,
+                   plot_point_cloud)
 
 
 def overload_dolfinx():

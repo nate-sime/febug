@@ -20,14 +20,14 @@ meshes3D = [dolfinx.mesh.create_unit_cube(MPI.COMM_WORLD, 3, 3, 3)]
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_function_cg(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("CG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p)))
     febug.plot_function(u)
 
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("p", [0, 1, 2])
 def test_plot_function_dg(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.FunctionSpace(mesh, ("DG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("DG", p)))
     febug.plot_function(u)
 
 
@@ -38,7 +38,7 @@ def test_plot_function_dg(p, mesh):
      for msh in meshes1D + meshes2D + meshes3D])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_warp(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
     febug.plot_warp(u)
 
 
@@ -49,7 +49,7 @@ def test_plot_warp(p, mesh):
      for msh in meshes1D + meshes2D + meshes3D])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_quiver(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
     febug.plot_quiver(u)
 
 
@@ -60,7 +60,7 @@ def test_plot_quiver(p, mesh):
      for msh in meshes1D + meshes2D + meshes3D])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_streamlines_evenly_spaced_2D(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
     febug.plot_streamlines_evenly_spaced_2D(u, start_position=(0.5, 0.5, 0.0))
 
 
@@ -71,7 +71,7 @@ def test_plot_streamlines_evenly_spaced_2D(p, mesh):
      for msh in meshes1D + meshes2D + meshes3D])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_streamlines_from_source(p, mesh):
-    u = dolfinx.fem.Function(dolfinx.fem.VectorFunctionSpace(mesh, ("CG", p)))
+    u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
     pt_cloud_source = pyvista.PolyData(mesh.geometry.x)
     febug.plot_streamlines_from_source(u, pt_cloud_source, max_time=1.0)
 
@@ -89,16 +89,16 @@ def test_plot_mesh(mesh):
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_dofmap(p, mesh):
-    V = dolfinx.fem.FunctionSpace(mesh, ("CG", p))
+    V = dolfinx.fem.functionspace(mesh, ("CG", p))
     febug.plot_dofmap(V)
 
 
-_plot_elements = [("CG", 1), ("CG", 2), ("DG", 0), ("DG", 1)]
+_plot_elements = (("CG", 1), ("CG", 2), ("DG", 0), ("DG", 1))
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("e", _plot_elements)
 def test_plot_function_dofs(e, mesh):
-    V = dolfinx.fem.FunctionSpace(mesh, e)
+    V = dolfinx.fem.functionspace(mesh, e)
     u = dolfinx.fem.Function(V)
     febug.plot_function_dofs(u, fmt=".3e")
 
@@ -107,7 +107,7 @@ def test_plot_function_dofs(e, mesh):
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 @pytest.mark.parametrize("e", _plot_elements)
 def test_plot_vector_function_dofs(e, mesh, vec_dim):
-    V = dolfinx.fem.VectorFunctionSpace(mesh, e, dim=vec_dim)
+    V = dolfinx.fem.functionspace(mesh, (*e, (vec_dim,)))
     u = dolfinx.fem.Function(V)
     febug.plot_function_dofs(u, fmt=".3e")
 
@@ -125,7 +125,10 @@ def test_plot_meshtags(mesh):
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
 def test_plot_mesh_quality(mesh):
     for d in range(1, mesh.topology.dim+1):
-        febug.plot_mesh_quality(mesh, d)
+        mesh.topology.create_entities(d)
+        febug.plot_mesh_quality(
+            mesh, d,
+            entities=np.arange(mesh.topology.index_map(d).size_local))
 
 
 @pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
@@ -133,3 +136,12 @@ def test_plot_entity_indices(mesh):
     for d in range(mesh.topology.dim+1):
         mesh.topology.create_entities(d)
         febug.plot_entity_indices(mesh, d)
+
+
+@pytest.mark.parametrize("dim", [1, 2, 3])
+def test_plot_point_cloud(dim):
+    np.random.seed(1)
+    pc = np.random.rand(10, 3)
+    if dim < 3:
+        pc[:,(3-dim):] = 0.0
+    febug.plot_point_cloud(pc)

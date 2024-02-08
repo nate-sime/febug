@@ -19,7 +19,7 @@ def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
 
 
 @_to_pyvista_grid.register
-def _(V: dolfinx.fem.FunctionSpaceBase):
+def _(V: dolfinx.fem.FunctionSpace):
     return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(V))
 
 
@@ -40,7 +40,7 @@ def _(u: dolfinx.fem.Function):
     if np.iscomplexobj(dof_values):
         dof_values = dof_values.real
 
-    if V.ufl_element().degree() == 0:
+    if V.ufl_element().degree == 0:
         grid = _to_pyvista_grid(mesh, mesh.topology.dim)
         num_dofs_local = V.dofmap.index_map.size_local
         grid.cell_data[u.name] = dof_values[:num_dofs_local]
@@ -242,7 +242,7 @@ def plot_streamlines_from_source(
     return plotter
 
 
-def plot_dofmap(V: dolfinx.fem.FunctionSpaceBase, plotter: pyvista.Plotter=None):
+def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = V.mesh
@@ -348,6 +348,21 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
             point_color="pink")
 
     if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
+def plot_point_cloud(xp: np.ndarray[float],
+                     plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    pv_point_cloud = pyvista.PolyData(xp)
+    plotter.add_mesh(pv_point_cloud)
+
+    if np.all(np.isclose(xp[:,2], 0.0)):
         plotter.enable_parallel_projection()
         plotter.view_xy()
 
