@@ -6,7 +6,7 @@ import pyvista
 
 import dolfinx
 import dolfinx.plot
-
+import ufl.core.expr
 
 entity_label_args = dict(point_size=15, font_size=12, bold=False,
                          shape_color="white", text_color="black")
@@ -19,7 +19,7 @@ def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
 
 
 @_to_pyvista_grid.register
-def _(V: dolfinx.fem.FunctionSpaceBase):
+def _(V: dolfinx.fem.FunctionSpace):
     return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(V))
 
 
@@ -40,7 +40,7 @@ def _(u: dolfinx.fem.Function):
     if np.iscomplexobj(dof_values):
         dof_values = dof_values.real
 
-    if V.ufl_element().degree() == 0:
+    if V.ufl_element().degree == 0:
         grid = _to_pyvista_grid(mesh, mesh.topology.dim)
         num_dofs_local = V.dofmap.index_map.size_local
         grid.cell_data[u.name] = dof_values[:num_dofs_local]
@@ -94,6 +94,17 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
     return plotter
 
 
+def create_plottable_ufl_expression(
+        expr_ufl: ufl.core.expr.Expr,
+        u: dolfinx.fem.Function | dolfinx.fem.FunctionSpace):
+    if isinstance(u, dolfinx.fem.FunctionSpace):
+        u = dolfinx.fem.Function(u)
+    expr = dolfinx.fem.Expression(
+        expr_ufl, u.function_space.element.interpolation_points())
+    u.interpolate(expr)
+    return u
+
+
 def plot_function(u: dolfinx.fem.function.Function,
                   plotter: pyvista.Plotter=None):
     if plotter is None:
@@ -114,6 +125,13 @@ def plot_function(u: dolfinx.fem.function.Function,
         plotter.view_xy()
 
     return plotter
+
+
+def plot_ufl_expression(expr_ufl: ufl.core.expr.Expr,
+                        V: dolfinx.fem.FunctionSpace,
+                        plotter: pyvista.Plotter=None):
+    fh = create_plottable_ufl_expression(expr_ufl, V)
+    return plot_function(fh, plotter)
 
 
 def plot_meshtags(meshtags: dolfinx.mesh.MeshTags,
@@ -242,11 +260,10 @@ def plot_streamlines_from_source(
     return plotter
 
 
-def plot_dofmap(V: dolfinx.fem.FunctionSpaceBase, plotter: pyvista.Plotter=None):
+def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = V.mesh
-    plot_mesh(mesh, mesh.topology.dim, plotter=plotter)
 
     x = V.tabulate_dof_coordinates()
     if x.shape[0] == 0:
@@ -348,6 +365,21 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
             point_color="pink")
 
     if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
+def plot_point_cloud(xp: np.ndarray[float],
+                     plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    pv_point_cloud = pyvista.PolyData(xp)
+    plotter.add_mesh(pv_point_cloud)
+
+    if np.all(np.isclose(xp[:,2], 0.0)):
         plotter.enable_parallel_projection()
         plotter.view_xy()
 

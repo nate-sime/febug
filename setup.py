@@ -13,9 +13,9 @@ if sys.version_info < (3, 10):
     print("Python 3.10 or higher required, please upgrade.")
     sys.exit(1)
 
-VERSION = "2024.0.1"
+VERSION = "0.8.0"
 
-REQUIREMENTS = ["pyvista", "fenics-dolfinx>0.7.0.dev0"]
+REQUIREMENTS = ["pyvista", "fenics-dolfinx>0.8.0"]
 
 
 class CMakeExtension(Extension):

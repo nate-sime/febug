@@ -9,7 +9,7 @@ from mpi4py import MPI
 
 def test_petsc_object_count_limit():
     mesh = dolfinx.mesh.create_unit_square(MPI.COMM_WORLD, 4, 4)
-    V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
+    V = dolfinx.fem.functionspace(mesh, ("CG", 1))
     v = ufl.TestFunction(V)
 
     u = dolfinx.fem.Function(V)

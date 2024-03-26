@@ -1,10 +1,14 @@
 import sys
-from .plot import (plot_mesh, plot_function, plot_meshtags, plot_dofmap,
-                   plot_warp, plot_quiver,
-                   plot_streamlines_evenly_spaced_2D,
-                   plot_streamlines_from_source,
-                   plot_entity_indices,
-                   plot_mesh_quality, plot_function_dofs)
+from .plot import (
+    create_plottable_ufl_expression,
+    plot_mesh, plot_function, plot_ufl_expression,
+    plot_meshtags, plot_dofmap,
+    plot_warp, plot_quiver,
+    plot_streamlines_evenly_spaced_2D,
+    plot_streamlines_from_source,
+    plot_entity_indices,
+    plot_mesh_quality, plot_function_dofs,
+    plot_point_cloud)
 
 
 def overload_dolfinx():

@@ -17,13 +17,13 @@ subplotter.add_title("mesh")
 febug.plot_mesh(mesh, plotter=subplotter)
 
 # -- CG1 dofmap and ordering
-V = dolfinx.fem.FunctionSpace(mesh, ("CG", 1))
+V = dolfinx.fem.functionspace(mesh, ("CG", 1))
 subplotter.subplot(0, 1)
 subplotter.add_title("CG1 dofmap")
 febug.plot_dofmap(V, plotter=subplotter)
 
 # -- CG2 dofmap and ordering
-V = dolfinx.fem.FunctionSpace(mesh, ("CG", 2))
+V = dolfinx.fem.functionspace(mesh, ("CG", 2))
 subplotter.subplot(0, 2)
 subplotter.add_title("CG2 dofmap")
 febug.plot_dofmap(V, plotter=subplotter)
@@ -40,7 +40,7 @@ eles = [("CG", 1), ("CG", 2), ("DG", 0)]
 for e_i, e in enumerate(eles):
     subplotter.subplot(2, e_i)
     subplotter.add_title(f"{e[0]}{e[1]} space DoFs")
-    V = dolfinx.fem.FunctionSpace(mesh, e)
+    V = dolfinx.fem.functionspace(mesh, e)
     u = dolfinx.fem.Function(V)
     u.interpolate(lambda x: x[0]*x[1])
     febug.plot_function(u, plotter=subplotter)
