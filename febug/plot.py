@@ -6,7 +6,7 @@ import pyvista
 
 import dolfinx
 import dolfinx.plot
-
+import ufl.core.expr
 
 entity_label_args = dict(point_size=15, font_size=12, bold=False,
                          shape_color="white", text_color="black")
@@ -94,6 +94,17 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
     return plotter
 
 
+def create_plottable_ufl_expression(
+        expr_ufl: ufl.core.expr.Expr,
+        u: dolfinx.fem.Function | dolfinx.fem.FunctionSpace):
+    if isinstance(u, dolfinx.fem.FunctionSpace):
+        u = dolfinx.fem.Function(u)
+    expr = dolfinx.fem.Expression(
+        expr_ufl, u.function_space.element.interpolation_points())
+    u.interpolate(expr)
+    return u
+
+
 def plot_function(u: dolfinx.fem.function.Function,
                   plotter: pyvista.Plotter=None):
     if plotter is None:
@@ -114,6 +125,13 @@ def plot_function(u: dolfinx.fem.function.Function,
         plotter.view_xy()
 
     return plotter
+
+
+def plot_ufl_expression(expr_ufl: ufl.core.expr.Expr,
+                        V: dolfinx.fem.FunctionSpace,
+                        plotter: pyvista.Plotter=None):
+    fh = create_plottable_ufl_expression(expr_ufl, V)
+    return plot_function(fh, plotter)
 
 
 def plot_meshtags(meshtags: dolfinx.mesh.MeshTags,
@@ -246,7 +264,6 @@ def plot_dofmap(V: dolfinx.fem.FunctionSpace, plotter: pyvista.Plotter=None):
     if plotter is None:
         plotter = pyvista.Plotter()
     mesh = V.mesh
-    plot_mesh(mesh, mesh.topology.dim, plotter=plotter)
 
     x = V.tabulate_dof_coordinates()
     if x.shape[0] == 0:

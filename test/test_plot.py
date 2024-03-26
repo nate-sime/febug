@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import pyvista
+import ufl
 from mpi4py import MPI
 import dolfinx
 import dolfinx.mesh
@@ -29,6 +30,14 @@ def test_plot_function_cg(p, mesh):
 def test_plot_function_dg(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("DG", p)))
     febug.plot_function(u)
+
+
+@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize("element", ["CG", "DG"])
+def test_plot_ufl_expression(p, mesh, element):
+    V = dolfinx.fem.functionspace(mesh, (element, p))
+    febug.plot_ufl_expression(ufl.SpatialCoordinate(mesh)[0], V)
 
 
 @pytest.mark.parametrize(
