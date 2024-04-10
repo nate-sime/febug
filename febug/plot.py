@@ -2,6 +2,7 @@ import functools
 import typing
 
 import numpy as np
+import numpy.typing as npt
 import pyvista
 
 import dolfinx
@@ -336,10 +337,10 @@ def plot_function_dofs(u: dolfinx.fem.function.Function,
     return plotter
 
 
-def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
-                        plotter: pyvista.Plotter=None):
-    if plotter is None:
-        plotter = pyvista.Plotter()
+def _plot_entity_indices_impl(mesh: dolfinx.mesh.Mesh, tdim: int,
+                              local_to_label_mapping: typing.Callable[
+                             [npt.NDArray[np.int32]], npt.NDArray[np.int32]],
+                              plotter: pyvista.Plotter):
 
     plot_mesh(mesh, tdim=tdim, plotter=plotter, show_owners=False)
 
@@ -351,24 +352,72 @@ def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
     if size_local > 0:
         x = dolfinx.mesh.compute_midpoints(mesh, tdim, entities)
         x_polydata = pyvista.PolyData(x)
-        x_polydata["labels"] = [f"{i}" for i in np.arange(size_local)]
+        labels = local_to_label_mapping(np.arange(size_local))
+        x_polydata["labels"] = [f"{i}" for i in labels]
         plotter.add_point_labels(x_polydata, "labels", **entity_label_args,
                                  point_color="grey")
 
     if num_ghosts > 0:
         x_ghost = dolfinx.mesh.compute_midpoints(mesh, tdim, ghosts)
         x_ghost_polydata = pyvista.PolyData(x_ghost)
-        x_ghost_polydata["labels"] = [
-            f"{i}" for i in np.arange(size_local, size_local + num_ghosts)]
+        ghost_labels = local_to_label_mapping(
+            np.arange(size_local, size_local + num_ghosts))
+        x_ghost_polydata["labels"] = [f"{i}" for i in ghost_labels]
         plotter.add_point_labels(
             x_ghost_polydata, "labels", **entity_label_args,
             point_color="pink")
+
+    return plotter
+
+
+def plot_entity_indices(mesh: dolfinx.mesh.Mesh, tdim: int,
+                        plotter: pyvista.Plotter=None,
+                        local_to_label_mapping: typing.Callable[
+                            [npt.NDArray[np.int32]], npt.NDArray[np.int32]
+                                                ] | None = None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    if local_to_label_mapping is None:
+        def local_to_label_mapping(local_idxs: npt.NDArray[np.int32]):
+            return local_idxs
+
+    plot_mesh(mesh, tdim=tdim, plotter=plotter, show_owners=False)
+    _plot_entity_indices_impl(mesh, tdim, local_to_label_mapping, plotter)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
         plotter.view_xy()
 
     return plotter
+
+
+def plot_entity_indices_global(mesh: dolfinx.mesh.Mesh, tdim: int,
+                               plotter: pyvista.Plotter=None):
+    im_tdim = mesh.topology.index_map(tdim)
+    return plot_entity_indices(
+        mesh, tdim, plotter=plotter,
+        local_to_label_mapping=lambda local_idx: im_tdim.local_to_global(
+            local_idx))
+
+
+def plot_entity_indices_original(mesh: dolfinx.mesh.Mesh, tdim: int,
+                                 plotter: pyvista.Plotter=None):
+    if not tdim in (0, mesh.topology.dim):
+        msg = ("Original indices only defined for topological dimensions 0 "
+               f"and {mesh.topology.dim}")
+        raise AttributeError(msg)
+
+    def get_original_indices(
+            local_idx: npt.NDArray[np.int32]) -> npt.NDArray[np.int32]:
+        assert tdim in (0, mesh.topology.dim)
+        return (
+            mesh.geometry.input_global_indices[local_idx]
+            if tdim == 0 else mesh.topology.original_cell_index[local_idx])
+
+    return plot_entity_indices(
+        mesh, tdim, plotter=plotter,
+        local_to_label_mapping=get_original_indices)
 
 
 def plot_point_cloud(xp: np.ndarray[float],

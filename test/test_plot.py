@@ -16,23 +16,24 @@ skip_parallel = pytest.mark.skipif(
 meshes1D = [dolfinx.mesh.create_unit_interval(MPI.COMM_WORLD, 3)]
 meshes2D = [dolfinx.mesh.create_unit_square(MPI.COMM_WORLD, 3, 3)]
 meshes3D = [dolfinx.mesh.create_unit_cube(MPI.COMM_WORLD, 3, 3, 3)]
+all_meshes = meshes1D + meshes2D + meshes3D
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_function_cg(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p)))
     febug.plot_function(u)
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("p", [0, 1, 2])
 def test_plot_function_dg(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("DG", p)))
     febug.plot_function(u)
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("p", [1, 2])
 @pytest.mark.parametrize("element", ["CG", "DG"])
 def test_plot_ufl_expression(p, mesh, element):
@@ -44,7 +45,7 @@ def test_plot_ufl_expression(p, mesh, element):
     "mesh",
     [pytest.param(msh, marks=pytest.mark.xfail(
         msh.topology.dim == 1, reason="No warping 1D meshes"))
-     for msh in meshes1D + meshes2D + meshes3D])
+     for msh in all_meshes])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_warp(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
@@ -55,7 +56,7 @@ def test_plot_warp(p, mesh):
     "mesh",
     [pytest.param(msh, marks=pytest.mark.xfail(
         msh.topology.dim == 1, reason="No quivering 1D meshes"))
-     for msh in meshes1D + meshes2D + meshes3D])
+     for msh in all_meshes])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_quiver(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
@@ -66,7 +67,7 @@ def test_plot_quiver(p, mesh):
     "mesh",
     [pytest.param(msh, marks=pytest.mark.xfail(
         msh.topology.dim != 2, reason="Streamline function for 2D only"))
-     for msh in meshes1D + meshes2D + meshes3D])
+     for msh in all_meshes])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_streamlines_evenly_spaced_2D(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
@@ -77,7 +78,7 @@ def test_plot_streamlines_evenly_spaced_2D(p, mesh):
     "mesh",
     [pytest.param(msh, marks=pytest.mark.xfail(
         msh.topology.dim == 1, reason="Streamlines not valid for 1D"))
-     for msh in meshes1D + meshes2D + meshes3D])
+     for msh in all_meshes])
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_streamlines_from_source(p, mesh):
     u = dolfinx.fem.Function(dolfinx.fem.functionspace(mesh, ("CG", p, (mesh.geometry.dim,))))
@@ -88,14 +89,14 @@ def test_plot_streamlines_from_source(p, mesh):
     febug.plot_streamlines_from_source(u, mesh_source, max_time=1.0)
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 def test_plot_mesh(mesh):
     for tdim in range(mesh.topology.dim + 1):
         mesh.topology.create_entities(tdim)
         febug.plot_mesh(mesh, tdim=tdim)
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("p", [1, 2])
 def test_plot_dofmap(p, mesh):
     V = dolfinx.fem.functionspace(mesh, ("CG", p))
@@ -104,7 +105,7 @@ def test_plot_dofmap(p, mesh):
 
 _plot_elements = (("CG", 1), ("CG", 2), ("DG", 0), ("DG", 1))
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("e", _plot_elements)
 def test_plot_function_dofs(e, mesh):
     V = dolfinx.fem.functionspace(mesh, e)
@@ -113,7 +114,7 @@ def test_plot_function_dofs(e, mesh):
 
 
 @pytest.mark.parametrize("vec_dim", [2, 3, 4])
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 @pytest.mark.parametrize("e", _plot_elements)
 def test_plot_vector_function_dofs(e, mesh, vec_dim):
     V = dolfinx.fem.functionspace(mesh, (*e, (vec_dim,)))
@@ -121,7 +122,7 @@ def test_plot_vector_function_dofs(e, mesh, vec_dim):
     febug.plot_function_dofs(u, fmt=".3e")
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 def test_plot_meshtags(mesh):
     for t in range(mesh.topology.dim + 1):
         mesh.topology.create_entities(t)
@@ -131,7 +132,7 @@ def test_plot_meshtags(mesh):
         febug.plot_meshtags(mt, mesh)
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 def test_plot_mesh_quality(mesh):
     for d in range(1, mesh.topology.dim+1):
         mesh.topology.create_entities(d)
@@ -140,11 +141,29 @@ def test_plot_mesh_quality(mesh):
             entities=np.arange(mesh.topology.index_map(d).size_local))
 
 
-@pytest.mark.parametrize("mesh", meshes1D + meshes2D + meshes3D)
+@pytest.mark.parametrize("mesh", all_meshes)
 def test_plot_entity_indices(mesh):
     for d in range(mesh.topology.dim+1):
         mesh.topology.create_entities(d)
         febug.plot_entity_indices(mesh, d)
+
+
+@pytest.mark.parametrize("mesh", all_meshes)
+def test_plot_entity_indices_global(mesh):
+    for d in range(mesh.topology.dim+1):
+        mesh.topology.create_entities(d)
+        febug.plot_entity_indices_global(mesh, d)
+
+
+@pytest.mark.parametrize(
+    "mesh,tdim", [pytest.param(msh, tdim, marks=pytest.mark.xfail(
+        tdim not in (0, msh.topology.dim),
+        reason="Original indices only available for vertices and cells",
+        strict=True))
+    for msh in all_meshes for tdim in range(msh.topology.dim + 1)])
+def test_plot_entity_indices_original(mesh, tdim):
+    mesh.topology.create_entities(tdim)
+    febug.plot_entity_indices_original(mesh, tdim)
 
 
 @pytest.mark.parametrize("dim", [1, 2, 3])

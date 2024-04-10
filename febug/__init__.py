@@ -6,7 +6,8 @@ from .plot import (
     plot_warp, plot_quiver,
     plot_streamlines_evenly_spaced_2D,
     plot_streamlines_from_source,
-    plot_entity_indices,
+    plot_entity_indices, plot_entity_indices_global,
+    plot_entity_indices_original,
     plot_mesh_quality, plot_function_dofs,
     plot_point_cloud)
 
