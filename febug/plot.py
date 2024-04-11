@@ -75,7 +75,10 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
             grid = _to_pyvista_grid(mesh, tdim, entities=grp)
             plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
         else:
-            point_cloud = pyvista.PolyData(mesh.geometry.x[grp])
+            e2g = dolfinx.mesh.entities_to_geometry(mesh, 0, grp)
+            assert e2g.shape[1] == 1
+            e2g = e2g.ravel()
+            point_cloud = pyvista.PolyData(mesh.geometry.x[e2g])
             plotter.add_mesh(point_cloud, point_size=8, color=color)
 
     if len(ghost_entities) > 0 and show_owners:
@@ -152,7 +155,11 @@ def plot_meshtags(meshtags: dolfinx.mesh.MeshTags,
         entities.cell_data[meshtags.name] = meshtags.values
         entities.set_active_scalars(meshtags.name)
     else:
-        x = mesh.geometry.x[meshtags.indices]
+        e2g = dolfinx.mesh.entities_to_geometry(mesh, 0, meshtags.indices)
+        # e2g dim 0 always shape (n, 1) so ravel
+        assert e2g.shape[1] == 1
+        e2g = e2g.ravel()
+        x = mesh.geometry.x[e2g]
         entities = pyvista.PolyData(x)
         entities[meshtags.name] = meshtags.values
 
