@@ -187,9 +187,9 @@ def plot_meshtags_values(meshtags: dolfinx.mesh.MeshTags,
     labels = meshtags.values
 
     entities_local = entities[entities < size_local]
-    labels_local = labels[labels < size_local]
+    labels_local = labels[entities < size_local]
     entities_ghost = entities[entities >= size_local]
-    labels_ghost = labels[labels >= size_local]
+    labels_ghost = labels[entities >= size_local]
 
     def plot_midpoint_label(entities, labels, color):
         x = dolfinx.mesh.compute_midpoints(mesh, tdim, entities)
