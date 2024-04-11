@@ -2,7 +2,8 @@ import sys
 from .plot import (
     create_plottable_ufl_expression,
     plot_mesh, plot_function, plot_ufl_expression,
-    plot_meshtags, plot_dofmap,
+    plot_meshtags, plot_meshtags_values,
+    plot_dofmap,
     plot_warp, plot_quiver,
     plot_streamlines_evenly_spaced_2D,
     plot_streamlines_from_source,

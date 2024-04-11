@@ -168,6 +168,49 @@ def plot_meshtags(meshtags: dolfinx.mesh.MeshTags,
     return plotter
 
 
+def plot_meshtags_values(meshtags: dolfinx.mesh.MeshTags,
+                         mesh: dolfinx.mesh.Mesh,
+                         fmt: str | None=None,
+                         plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    if fmt is None:
+        fmt = ".2f"
+        if np.issubdtype(meshtags.values.dtype, np.integer):
+            fmt = "d"
+
+    tdim = meshtags.dim
+    size_local = mesh.topology.index_map(tdim).size_local
+
+    entities = meshtags.indices
+    labels = meshtags.values
+
+    entities_local = entities[entities < size_local]
+    labels_local = labels[labels < size_local]
+    entities_ghost = entities[entities >= size_local]
+    labels_ghost = labels[labels >= size_local]
+
+    def plot_midpoint_label(entities, labels, color):
+        x = dolfinx.mesh.compute_midpoints(mesh, tdim, entities)
+        x_polydata = pyvista.PolyData(x)
+        x_polydata["labels"] = [f"{i:{fmt}}" for i in labels]
+        plotter.add_point_labels(x_polydata, "labels", **entity_label_args,
+                                 point_color=color)
+
+    if entities_local.size > 0:
+        plot_midpoint_label(entities_local, labels_local, "grey")
+
+    if entities_ghost.size > 0:
+        plot_midpoint_label(entities_ghost, labels_ghost, "pink")
+
+    if mesh.geometry.dim == 2:
+        plotter.enable_parallel_projection()
+        plotter.view_xy()
+
+    return plotter
+
+
 def plot_warp(u: dolfinx.fem.Function, plotter: pyvista.Plotter=None,
               factor: float=1.0):
     assert len(u.ufl_shape) == 1
