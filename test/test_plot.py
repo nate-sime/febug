@@ -133,6 +133,16 @@ def test_plot_meshtags(mesh):
 
 
 @pytest.mark.parametrize("mesh", all_meshes)
+def test_plot_meshtags_values(mesh):
+    for t in range(mesh.topology.dim + 1):
+        mesh.topology.create_entities(t)
+        indices = np.arange(mesh.topology.index_map(t).size_local)
+        values = np.ones_like(indices, dtype=np.int32)
+        mt = dolfinx.mesh.meshtags(mesh, t, indices, values)
+        febug.plot_meshtags_values(mt, mesh)
+
+
+@pytest.mark.parametrize("mesh", all_meshes)
 def test_plot_mesh_quality(mesh):
     for d in range(1, mesh.topology.dim+1):
         mesh.topology.create_entities(d)
