@@ -15,6 +15,8 @@ entity_label_args = dict(point_size=15, font_size=12, bold=False,
 @functools.singledispatch
 def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
                      entities=None):
+    mesh.topology.create_connectivity(0, tdim)
+    mesh.topology.create_connectivity(tdim, mesh.topology.dim)
     return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(
         mesh, tdim, entities))
 
@@ -110,7 +112,7 @@ def create_plottable_ufl_expression(
 
 
 def plot_function(u: dolfinx.fem.function.Function,
-                  plotter: pyvista.Plotter=None):
+                  plotter: pyvista.Plotter=None, **pv_args):
     if plotter is None:
         plotter = pyvista.Plotter()
 
@@ -122,7 +124,8 @@ def plot_function(u: dolfinx.fem.function.Function,
         # No data on process
         return plotter
 
-    plotter.add_mesh(grid, scalars=u.name, show_scalar_bar=True)
+    pv_args.setdefault("show_scalar_bar", True)
+    plotter.add_mesh(grid, scalars=u.name, **pv_args)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
