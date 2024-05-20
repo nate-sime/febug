@@ -110,7 +110,7 @@ def create_plottable_ufl_expression(
 
 
 def plot_function(u: dolfinx.fem.function.Function,
-                  plotter: pyvista.Plotter=None):
+                  plotter: pyvista.Plotter=None, **pv_args):
     if plotter is None:
         plotter = pyvista.Plotter()
 
@@ -122,7 +122,8 @@ def plot_function(u: dolfinx.fem.function.Function,
         # No data on process
         return plotter
 
-    plotter.add_mesh(grid, scalars=u.name, show_scalar_bar=True)
+    pv_args.setdefault("show_scalar_bar", True)
+    plotter.add_mesh(grid, scalars=u.name, **pv_args)
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
