@@ -15,6 +15,8 @@ entity_label_args = dict(point_size=15, font_size=12, bold=False,
 @functools.singledispatch
 def _to_pyvista_grid(mesh: dolfinx.mesh.Mesh, tdim: int,
                      entities=None):
+    mesh.topology.create_connectivity(0, tdim)
+    mesh.topology.create_connectivity(tdim, mesh.topology.dim)
     return pyvista.UnstructuredGrid(*dolfinx.plot.vtk_mesh(
         mesh, tdim, entities))
 
