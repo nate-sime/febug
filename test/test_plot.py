@@ -165,6 +165,13 @@ def test_plot_entity_indices_global(mesh):
         febug.plot_entity_indices_global(mesh, d)
 
 
+@pytest.mark.parametrize("mesh", all_meshes)
+def test_plot_geometry_indices(mesh):
+    for d in range(mesh.topology.dim+1):
+        mesh.topology.create_connectivity(d, mesh.topology.dim)
+        febug.plot_geometry_indices(mesh)
+
+
 @pytest.mark.parametrize(
     "mesh,tdim", [pytest.param(msh, tdim, marks=pytest.mark.xfail(
         tdim not in (0, msh.topology.dim),
