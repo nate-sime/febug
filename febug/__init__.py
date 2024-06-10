@@ -9,6 +9,7 @@ from .plot import (
     plot_streamlines_from_source,
     plot_entity_indices, plot_entity_indices_global,
     plot_entity_indices_original,
+    plot_geometry_indices,
     plot_mesh_quality, plot_function_dofs,
     plot_point_cloud)
 

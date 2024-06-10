@@ -473,6 +473,38 @@ def plot_entity_indices_original(mesh: dolfinx.mesh.Mesh, tdim: int,
         local_to_label_mapping=get_original_indices)
 
 
+def plot_geometry_indices(mesh: dolfinx.mesh.Mesh,
+                          plotter: pyvista.Plotter=None):
+    if plotter is None:
+        plotter = pyvista.Plotter()
+
+    plot_mesh(mesh, tdim=0, plotter=plotter, show_owners=False)
+
+    size_local = mesh.geometry.index_map().size_local
+    num_ghosts = mesh.geometry.index_map().num_ghosts
+    entities = np.arange(size_local, dtype=np.int32)
+    ghosts = np.arange(size_local, size_local + num_ghosts, dtype=np.int32)
+
+    if size_local > 0:
+        x = mesh.geometry.x[entities]
+        x_polydata = pyvista.PolyData(x)
+        labels = np.arange(size_local)
+        x_polydata["labels"] = [f"{i}" for i in labels]
+        plotter.add_point_labels(x_polydata, "labels", **entity_label_args,
+                                 point_color="grey")
+
+    if num_ghosts > 0:
+        x_ghost = mesh.geometry.x[ghosts]
+        x_ghost_polydata = pyvista.PolyData(x_ghost)
+        ghost_labels = np.arange(size_local, size_local + num_ghosts)
+        x_ghost_polydata["labels"] = [f"{i}" for i in ghost_labels]
+        plotter.add_point_labels(
+            x_ghost_polydata, "labels", **entity_label_args,
+            point_color="pink")
+
+    return plotter
+
+
 def plot_point_cloud(xp: np.ndarray[float],
                      plotter: pyvista.Plotter=None):
     if plotter is None:
