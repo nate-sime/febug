@@ -15,5 +15,8 @@ jobs:
       - name: Install dependencies
         run: python3 -m pip install --break-system-packages pyvista pytest
 
+      - name: Install python package
+        run: python3 -m pip install --check-build-dependencies .
+ 
       - name: Run unit tests
         run: python3 -m pytest test/
