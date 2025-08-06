@@ -56,9 +56,19 @@ def _(u: dolfinx.fem.Function):
 
 
 def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
-              show_owners: bool=False, plotter: pyvista.Plotter=None):
+              show_owners: bool=False, plotter: pyvista.Plotter=None,
+              on_root: bool=False):
+    if on_root and plotter is not None:
+        raise RuntimeError("Need to create own plotter to plot on root.")
+
+    is_root = mesh.comm.rank == 0
+
     if plotter is None:
-        plotter = pyvista.Plotter()
+        shape = (1, 1)
+        if on_root and is_root:
+            shape = (1, mesh.comm.size)
+        plotter = pyvista.Plotter(shape=shape)
+        plotter.subplot(0, 0)
 
     if tdim is None:
         tdim = mesh.topology.dim
@@ -71,17 +81,28 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
 
     # Plot ghosts first so the z-heightmap shows local entities primarily
     for grp, color in ((ghost_entities, "pink"), (entities, "black")):
-        if len(grp) == 0:
-            continue
         if tdim > 0:
             grid = _to_pyvista_grid(mesh, tdim, entities=grp)
-            plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
+            if on_root:
+                plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
+                if is_root:
+                    for i in range(1, mesh.comm.size):
+                        plotter.subplot(0, i)
+                        grid = mesh.comm.recv(source=i)
+                        plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
+                    plotter.subplot(0, 0)
+                else:
+                    mesh.comm.send(grid, dest=0)
+            else:
+                plotter.add_mesh(grid, style="wireframe", line_width=2, color=color)
         else:
             e2g = dolfinx.mesh.entities_to_geometry(mesh, 0, grp)
             assert e2g.shape[1] == 1
             e2g = e2g.ravel()
             point_cloud = pyvista.PolyData(mesh.geometry.x[e2g])
             plotter.add_mesh(point_cloud, point_size=8, color=color)
+
+            # TODO: on_root
 
     if len(ghost_entities) > 0 and show_owners:
         ghost_owners = mesh.topology.index_map(tdim).ghost_owners()
@@ -92,10 +113,16 @@ def plot_mesh(mesh: dolfinx.mesh.Mesh, tdim: int=None,
         ghost_polydata["labels"] = ghost_owners
         plotter.add_point_labels(ghost_polydata, "labels", point_size=8,
                                  font_size=24)
+        # TODO: on_root
 
     if mesh.geometry.dim == 2:
         plotter.enable_parallel_projection()
         plotter.view_xy()
+        if on_root and is_root:
+            for i in range(1, mesh.comm.size):
+                plotter.subplot(0, i)
+                plotter.enable_parallel_projection()
+                plotter.view_xy()
 
     return plotter
 
@@ -106,7 +133,7 @@ def create_plottable_ufl_expression(
     if isinstance(u, dolfinx.fem.FunctionSpace):
         u = dolfinx.fem.Function(u)
     expr = dolfinx.fem.Expression(
-        expr_ufl, u.function_space.element.interpolation_points())
+        expr_ufl, u.function_space.element.interpolation_points)
     u.interpolate(expr)
     return u
 

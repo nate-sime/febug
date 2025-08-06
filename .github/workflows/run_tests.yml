@@ -1,6 +1,11 @@
 name: febug unit tests
 
 on:
+  schedule:
+    - cron: 0 0 * * 0 # weekly at 00:00 on Sunday
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
