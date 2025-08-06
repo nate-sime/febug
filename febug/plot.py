@@ -106,7 +106,7 @@ def create_plottable_ufl_expression(
     if isinstance(u, dolfinx.fem.FunctionSpace):
         u = dolfinx.fem.Function(u)
     expr = dolfinx.fem.Expression(
-        expr_ufl, u.function_space.element.interpolation_points())
+        expr_ufl, u.function_space.element.interpolation_points)
     u.interpolate(expr)
     return u
 
